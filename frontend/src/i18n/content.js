@@ -164,7 +164,7 @@ export const content = {
     },
     hero: {
       overline: "苏州赛冠自动化 · Suzhou Topchampion",
-      title_a: "以精密自动化与绿色能源",
+      title_a: "赋能全球工业 ·",
       title_b: "精密自动化",
       title_c: "绿色能源融合",
       andText: "与",
