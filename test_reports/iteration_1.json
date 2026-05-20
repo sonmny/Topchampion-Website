@@ -1,0 +1,37 @@
+{
+  "summary": "Full E2E testing of Topchampion landing page. Backend: 10/10 pytest cases pass (health, create lead, persistence, sort desc, no _id, required-field 422s, invalid enum 422s). Frontend: 17/17 Playwright checks pass — landing sections render, hero CTAs work, EN/CN toggle switches headline content, nav links scroll, submit disabled when empty, smart-quote form submits successfully and quote-success block appears, footer with social links rendered.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Hero (CN)", "issues": ["Chinese headline shows duplicated phrasing: '以精密自动化与绿色能源 精密自动化 与 绿色能源融合.' — looks like title_a already contains '精密自动化与绿色能源' which then repeats via title_b/title_c. Suggest reviewing i18n/content.js CN title_a so the three coloured spans don't visually duplicate."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_leads.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional polish) Fix CN hero headline duplication in /app/frontend/src/i18n/content.js — title_a should not already include the words rendered by title_b/title_c."
+  ],
+  "critical_code_review_comments": [
+    "server.py uses deprecated @app.on_event('shutdown') — prefer FastAPI lifespan handler (non-blocking).",
+    "LeadCreate accepts EmailStr but model_dump may still leave email=null on disk; insertion converts datetime to isoformat manually — consider Pydantic json mode for consistency.",
+    "CORS allow_origins falls back to '*' with allow_credentials=True which browsers reject; should be explicit list in production.",
+    "GET /api/leads has no pagination cursor beyond `limit` query and no auth — exposes all lead PII publicly. HIGH PRIORITY for production hardening (out of scope for this iteration but worth flagging)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_leads.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "N/A — no auth in this app",
+  "seed_data_creation": "Created TEST_-prefixed lead documents in MongoDB `leads` collection via API during tests; safe to leave or purge by prefix.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend test suite at /app/backend/tests/test_leads.py covers all lead-API contracts. Frontend Playwright covers landing-root, nav links, hero CTAs, lang toggle (EN/CN), and the full smart-quote submit flow using data-testid='industry-bess' / 'plc-siemens'. Shadcn Select dropdowns work fine with force=True clicks plus a 400ms wait. /api/leads returns lead documents without _id (excluded server-side).",
+  "rca of the issue": "No bugs found in tested flows. Only a minor CN i18n content duplication identified as a design polish item."
+}
