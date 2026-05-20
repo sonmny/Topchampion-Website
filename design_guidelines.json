@@ -1,0 +1,116 @@
+{
+  "theme": "dark",
+  "archetype": "4 (Swiss & High-Contrast)",
+  "branding": {
+    "name": "Suzhou Topchampion Automation Co., Ltd. (苏州赛冠)",
+    "tone": "Modern, high-tech, authoritative, clean, and reliable."
+  },
+  "colors": {
+    "background_base": "#0A0A0A",
+    "background_surface": "#1A1A1A",
+    "primary": "#0055A4",
+    "primary_hover": "#004080",
+    "accent_green": "#00E676",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#A1A1AA",
+    "border_color": "rgba(255, 255, 255, 0.1)",
+    "glass_background": "rgba(10, 10, 10, 0.7)"
+  },
+  "typography": {
+    "font_families": {
+      "heading": "'Cabinet Grotesk', sans-serif",
+      "body": "'IBM Plex Sans', sans-serif",
+      "mono": "'JetBrains Mono', monospace"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter uppercase",
+      "h2": "text-3xl sm:text-4xl font-bold tracking-tight uppercase",
+      "h3": "text-xl sm:text-2xl font-semibold tracking-tight",
+      "body": "text-base leading-relaxed text-zinc-400",
+      "overline": "text-xs font-mono uppercase tracking-[0.2em] text-[#00E676]"
+    }
+  },
+  "layout_and_spacing": {
+    "container_padding": "p-6 md:p-12 lg:p-24",
+    "section_gap": "gap-20 md:gap-32",
+    "card_padding": "p-6 sm:p-8",
+    "grid_strategy": "The 'Technical' Look - exposed skeletons, 1px subtle borders, sharp corners."
+  },
+  "components": {
+    "navigation": {
+      "style": "Sticky glassmorphism header, bg-black/60 backdrop-blur-xl border-b border-white/10 z-50.",
+      "elements": ["Logo (text)", "Nav Links", "Bilingual Toggle (EN/中文)", "Primary CTA Button"]
+    },
+    "hero": {
+      "layout": "Full height or min-h-[90vh] with absolute background image and gradient overlay.",
+      "overlay": "bg-gradient-to-r from-black/80 via-black/50 to-transparent",
+      "visuals": "Subtle motion/ambient glow behind text using absolute positioning and blur-3xl.",
+      "cta": "Sharp rectangular button, bg-[#0055A4] text-white font-semibold tracking-wide uppercase px-8 py-4 hover:bg-[#004080] transition-colors"
+    },
+    "trust_bar": {
+      "style": "Horizontal marquee or grid of text-based partner badges. Font mono, uppercase, large tracking, text-zinc-500 hover:text-white transition duration-300.",
+      "partners": ["ABB (Authorized Manufacturer)", "RITTAL (Ri4Power Partner)", "ROCKWELL AUTOMATION (System Integrator)"]
+    },
+    "stats_counter": {
+      "layout": "Grid cols-1 md:grid-cols-3 gap-8 py-12 border-y border-white/10",
+      "styling": "Numbers in H2 or H1 text-[#00E676], labels in mono text-zinc-400 uppercase tracking-widest."
+    },
+    "solutions_cards": {
+      "layout": "Grid cols-1 md:grid-cols-3 gap-6",
+      "card_style": "Flat background (#1A1A1A), 1px border-white/10, group hover:border-[#0055A4]/50 transition-colors duration-300. Sharp edges (rounded-none).",
+      "image_treatment": "Images at top of card, h-48 w-full object-cover grayscale group-hover:grayscale-0 transition duration-500."
+    },
+    "engineering_timeline": {
+      "layout": "Vertical timeline aligned left. A single 1px vertical line (#0055A4) running down.",
+      "nodes": "Steps: Consultation -> Design -> Manufacturing -> Commissioning. Active node marked by #00E676 glowing dot."
+    },
+    "smart_quote_form": {
+      "layout": "Bento-style or 2-column grid for inputs.",
+      "input_style": "Solid dark inputs bg-[#27272A] border border-white/10 focus:border-[#0055A4] focus:ring-1 focus:ring-[#0055A4] rounded-none text-white.",
+      "fields": ["Name", "Company", "Industry (Dropdown)", "Preferred PLC Brand (Dropdown)", "Project Description (Textarea)"]
+    },
+    "footer": {
+      "style": "Deep space background (#0A0A0A), top border white/10, padding py-20.",
+      "content": "Company Info (Suzhou, China), Links to Certifications, Social Icons (Lucide-react)."
+    }
+  },
+  "media": {
+    "images": [
+      {
+        "category": "hero",
+        "url": "https://static.prod-images.emergentagent.com/jobs/a29b9958-b26d-437a-87fb-d84afe93c83d/images/08417e2a11619774401ecc46b837cd0a7ffa841e25dbaea428f808abcbbb2107.png",
+        "description": "High-tech industrial manufacturing facility with vibrant blue and green LED accents. Use with black gradient overlay."
+      },
+      {
+        "category": "solution_tire_production",
+        "url": "https://images.unsplash.com/photo-1774229637247-3cd45219826c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwxfHxpbmR1c3RyaWFsJTIwcm9ib3QlMjBhcm0lMjBtYW51ZmFjdHVyaW5nfGVufDB8fHx8MTc3OTIzODQ4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "Robotic arm for automated tire production lines."
+      },
+      {
+        "category": "solution_control_cabinet",
+        "url": "https://images.unsplash.com/photo-1563456019560-2b37aa7ad890?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBlbGVjdHJpY2FsJTIwY29udHJvbCUyMHBhbmVsJTIwY2FiaW5ldHxlbnwwfHx8fDE3NzkyMzg0ODJ8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Modern electrical control panel cabinet close-up."
+      },
+      {
+        "category": "solution_green_energy",
+        "url": "https://images.pexels.com/photos/17489160/pexels-photo-17489160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Detailed image of illuminated server racks showcasing modern technology infrastructure for green data center."
+      }
+    ]
+  },
+  "interactive_and_motion": {
+    "hover_states": "Buttons and links must always change color or background. Use Tailwind 'group' classes for parent-child interaction.",
+    "scroll_animations": "Use framer-motion for smooth staggered entrances of grid items (cards, stats).",
+    "accessibility": "Ensure focus states have high contrast ring (#00E676). All interactive elements must have data-testid attributes."
+  },
+  "icons_library": "lucide-react (Use technical/geometric icons, stroke-width 1.5)",
+  "instructions_to_main_agent": [
+    "Install 'lucide-react' for icons and 'framer-motion' for scroll reveal animations.",
+    "Strictly follow the Dark Theme. Do not use generic 'Inter' for headings; apply 'Cabinet Grotesk' via Google Fonts or standard Tailwind sans stack with strict tracking if custom font fails.",
+    "Implement the Smart Quote form using Shadcn components (Input, Select/Dropdown, Textarea).",
+    "Do not use generic placeholders for images. Use the provided exact URLs from the media section.",
+    "All cards and form fields should be sharp-edged (rounded-none) to fit the industrial aesthetic.",
+    "For the bilingual toggle, standard state toggling between 'EN' and '中文' in the UI is sufficient.",
+    "Include 'data-testid' on all buttons, forms, nav links, and interactive components."
+  ]
+}
