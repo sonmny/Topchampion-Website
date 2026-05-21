@@ -12,7 +12,7 @@ export const TrustBar = () => {
       className="relative border-y border-white/10 bg-[#0A0A0A] py-10 overflow-hidden"
     >
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 mb-6 flex items-center gap-4">
-        <span className="w-8 h-px bg-[#00E676]" />
+        <span className="w-8 h-px bg-[#C9A063]" />
         <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-zinc-500">
           {t.trust.label}
         </span>

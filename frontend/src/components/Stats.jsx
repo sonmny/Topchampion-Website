@@ -47,7 +47,7 @@ export const Stats = () => {
     >
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-16 lg:py-20">
         <div className="flex items-center gap-4 mb-10">
-          <span className="w-8 h-px bg-[#00E676]" />
+          <span className="w-8 h-px bg-[#C9A063]" />
           <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-zinc-500">
             {t.stats.label}
           </span>
@@ -63,7 +63,7 @@ export const Stats = () => {
               transition={{ duration: 0.5, delay: i * 0.08 }}
               className="bg-[#0A0A0A] p-8 lg:p-10 flex flex-col gap-3"
             >
-              <div className="font-heading text-5xl lg:text-6xl font-bold tracking-tighter text-[#00E676]">
+              <div className="font-heading text-5xl lg:text-6xl font-bold tracking-tighter text-[#C9A063]">
                 <AnimatedValue value={s.value} />
               </div>
               <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-400">

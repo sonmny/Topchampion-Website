@@ -14,8 +14,8 @@ export const CaseStudies = () => {
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-5">
-            <span className="w-8 h-px bg-[#00E676]" />
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#00E676]">
+            <span className="w-8 h-px bg-[#C9A063]" />
+            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063]">
               {t.cases.overline}
             </span>
           </div>
@@ -39,14 +39,14 @@ export const CaseStudies = () => {
                 <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-zinc-500">
                   {c.industry}
                 </span>
-                <Quote size={20} className="text-[#0055A4] opacity-60" />
+                <Quote size={20} className="text-[#0F6B3F] opacity-60" />
               </div>
               <blockquote className="font-heading text-lg lg:text-xl text-white leading-snug">
                 “{c.quote}”
               </blockquote>
               <figcaption className="mt-auto pt-6 border-t border-white/5 flex items-center justify-between">
                 <span className="text-xs text-zinc-400">{c.author}</span>
-                <span className="font-mono text-xs tracking-wider text-[#00E676] uppercase">
+                <span className="font-mono text-xs tracking-wider text-[#C9A063] uppercase">
                   {c.metric}
                 </span>
               </figcaption>

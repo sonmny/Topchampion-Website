@@ -81,8 +81,8 @@ export const SmartQuoteForm = () => {
         {/* Header */}
         <div className="lg:col-span-5 lg:sticky lg:top-32 self-start">
           <div className="flex items-center gap-3 mb-5">
-            <span className="w-8 h-px bg-[#00E676]" />
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#00E676]">
+            <span className="w-8 h-px bg-[#C9A063]" />
+            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063]">
               {t.quote.overline}
             </span>
           </div>
@@ -98,7 +98,7 @@ export const SmartQuoteForm = () => {
               "NDA-ready scoped technical proposal",
             ].map((line, i) => (
               <div key={i} className="flex items-center gap-3 text-sm text-zinc-300">
-                <span className="w-1.5 h-1.5 bg-[#00E676]" />
+                <span className="w-1.5 h-1.5 bg-[#C9A063]" />
                 <span>{line}</span>
               </div>
             ))}
@@ -113,9 +113,9 @@ export const SmartQuoteForm = () => {
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4 }}
-              className="border border-[#00E676]/30 bg-[#00E676]/[0.04] p-10 lg:p-14 flex flex-col items-start gap-6"
+              className="border border-[#C9A063]/30 bg-[#C9A063]/[0.04] p-10 lg:p-14 flex flex-col items-start gap-6"
             >
-              <CheckCircle2 size={42} className="text-[#00E676]" strokeWidth={1.5} />
+              <CheckCircle2 size={42} className="text-[#C9A063]" strokeWidth={1.5} />
               <h3 className="font-heading text-2xl lg:text-3xl font-bold text-white tracking-tight">
                 {t.quote.success_title}
               </h3>
@@ -123,7 +123,7 @@ export const SmartQuoteForm = () => {
               <button
                 onClick={() => setSuccess(false)}
                 data-testid="submit-another"
-                className="mt-4 inline-flex items-center gap-2 font-mono text-xs tracking-[0.2em] uppercase text-[#00E676] hover:text-white transition-colors"
+                className="mt-4 inline-flex items-center gap-2 font-mono text-xs tracking-[0.2em] uppercase text-[#C9A063] hover:text-white transition-colors"
               >
                 Submit another inquiry <ArrowRight size={14} />
               </button>
@@ -192,7 +192,7 @@ export const SmartQuoteForm = () => {
                         key={k}
                         value={k}
                         data-testid={`industry-${k}`}
-                        className="rounded-none focus:bg-[#0055A4] focus:text-white"
+                        className="rounded-none focus:bg-[#0F6B3F] focus:text-white"
                       >
                         {v}
                       </SelectItem>
@@ -218,7 +218,7 @@ export const SmartQuoteForm = () => {
                         key={k}
                         value={k}
                         data-testid={`plc-${k}`}
-                        className="rounded-none focus:bg-[#0055A4] focus:text-white"
+                        className="rounded-none focus:bg-[#0F6B3F] focus:text-white"
                       >
                         {v}
                       </SelectItem>
@@ -249,7 +249,7 @@ export const SmartQuoteForm = () => {
                   data-testid="form-submit"
                   type="submit"
                   disabled={!isValid || submitting}
-                  className="group inline-flex items-center justify-center gap-3 bg-[#00E676] hover:bg-[#00C766] text-black font-bold uppercase tracking-wide text-sm px-8 h-14 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="group inline-flex items-center justify-center gap-3 bg-[#C9A063] hover:bg-[#B58D4F] text-black font-bold uppercase tracking-wide text-sm px-8 h-14 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {submitting ? t.quote.submitting : t.quote.submit}
                   {!submitting && (
@@ -277,10 +277,10 @@ export const SmartQuoteForm = () => {
         }
         textarea.industrial-input { height: auto !important; padding-top: 14px !important; padding-bottom: 14px !important; }
         .industrial-input:focus, .industrial-input:focus-visible {
-          border-color: #00E676 !important;
+          border-color: #C9A063 !important;
           background-color: #181818 !important;
           outline: none !important;
-          box-shadow: 0 0 0 1px #00E676 !important;
+          box-shadow: 0 0 0 1px #C9A063 !important;
         }
         .industrial-input::placeholder { color: #52525b !important; }
       `}</style>
@@ -292,7 +292,7 @@ const Field = ({ label, required, children }) => (
   <label className="flex flex-col gap-2">
     <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-zinc-400">
       {label}
-      {required && <span className="text-[#00E676] ml-1">*</span>}
+      {required && <span className="text-[#C9A063] ml-1">*</span>}
     </span>
     {children}
   </label>

@@ -14,10 +14,11 @@ export const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-4 flex flex-col gap-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#0055A4] flex items-center justify-center relative">
-                <div className="absolute inset-0 border border-[#00E676]/40 translate-x-[3px] translate-y-[3px]" />
-                <span className="font-heading font-bold text-white text-xl relative">T</span>
-              </div>
+              <img
+                src="https://customer-assets.emergentagent.com/job_green-automation-pro/artifacts/im0tm1zz_Gemini_Generated_Image_6tbew96tbew96tbe.png"
+                alt="Topchampion logo"
+                className="w-12 h-12 object-contain"
+              />
               <div>
                 <div className="font-heading font-bold text-white text-base tracking-tight uppercase">
                   Topchampion Automation
@@ -31,17 +32,17 @@ export const Footer = () => {
 
             <div className="flex flex-col gap-2 mt-3 text-sm text-zinc-400">
               <div className="flex items-center gap-3">
-                <MapPin size={14} className="text-[#00E676]" />
+                <MapPin size={14} className="text-[#C9A063]" />
                 <span>{t.footer.address}</span>
               </div>
               <div className="flex items-center gap-3">
-                <Mail size={14} className="text-[#00E676]" />
+                <Mail size={14} className="text-[#C9A063]" />
                 <a href="mailto:sales@topchampion.cn" className="hover:text-white transition-colors">
                   sales@topchampion.cn
                 </a>
               </div>
               <div className="flex items-center gap-3">
-                <Phone size={14} className="text-[#00E676]" />
+                <Phone size={14} className="text-[#C9A063]" />
                 <span>+86 512 0000 0000</span>
               </div>
             </div>
@@ -58,7 +59,7 @@ export const Footer = () => {
               className="lg:col-span-2 lg:col-start-auto"
               data-testid={`footer-col-${i}`}
             >
-              <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#00E676] mb-5">
+              <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-5">
                 {col.title}
               </div>
               <ul className="flex flex-col gap-3">
@@ -79,7 +80,7 @@ export const Footer = () => {
 
           {/* Social */}
           <div className="lg:col-span-2">
-            <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#00E676] mb-5">
+            <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-5">
               Connect
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -89,7 +90,7 @@ export const Footer = () => {
                   href="#"
                   data-testid={`social-${i}`}
                   onClick={(e) => e.preventDefault()}
-                  className="w-10 h-10 flex items-center justify-center border border-white/10 text-zinc-400 hover:text-[#00E676] hover:border-[#00E676] transition-colors"
+                  className="w-10 h-10 flex items-center justify-center border border-white/10 text-zinc-400 hover:text-[#C9A063] hover:border-[#C9A063] transition-colors"
                   aria-label={Icon.displayName || "social"}
                 >
                   <Icon size={16} />

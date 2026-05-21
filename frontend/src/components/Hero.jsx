@@ -66,8 +66,8 @@ export const Hero = () => {
             transition={{ duration: 0.6 }}
             className="flex items-center gap-3 mb-8"
           >
-            <span className="w-10 h-px bg-[#00E676]" />
-            <span className="font-mono text-[11px] tracking-[0.25em] uppercase text-[#00E676]">
+            <span className="w-10 h-px bg-[#C9A063]" />
+            <span className="font-mono text-[11px] tracking-[0.25em] uppercase text-[#C9A063]">
               {t.hero.overline}
             </span>
           </motion.div>
@@ -80,11 +80,11 @@ export const Hero = () => {
             className="font-heading text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tighter text-white leading-[1.02] uppercase"
           >
             {t.hero.title_a}{" "}
-            <span className="text-[#0055A4]" style={{ textShadow: "0 0 40px rgba(0,85,164,0.4)" }}>
+            <span className="text-[#1A8A52]" style={{ textShadow: "0 0 40px rgba(26,138,82,0.45)" }}>
               {t.hero.title_b}
             </span>{" "}
             <span className="text-zinc-500 font-light italic lowercase">{t.hero.andText}</span>{" "}
-            <span className="text-[#00E676]" style={{ textShadow: "0 0 40px rgba(0,230,118,0.35)" }}>
+            <span className="text-[#D4B179]" style={{ textShadow: "0 0 40px rgba(212,177,121,0.35)" }}>
               {t.hero.title_c}
             </span>
             .
@@ -108,7 +108,7 @@ export const Hero = () => {
             <button
               data-testid="hero-cta-primary"
               onClick={() => scrollTo("contact")}
-              className="group inline-flex items-center gap-3 bg-[#0055A4] hover:bg-[#004080] text-white font-semibold tracking-wide uppercase text-sm px-7 h-14 transition-colors"
+              className="group inline-flex items-center gap-3 bg-[#0F6B3F] hover:bg-[#0A5230] text-white font-semibold tracking-wide uppercase text-sm px-7 h-14 transition-colors"
             >
               {t.hero.cta_primary}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -116,7 +116,7 @@ export const Hero = () => {
             <button
               data-testid="hero-cta-secondary"
               onClick={() => scrollTo("solutions")}
-              className="inline-flex items-center gap-3 border border-white/15 hover:border-[#00E676] hover:text-[#00E676] text-white font-semibold tracking-wide uppercase text-sm px-7 h-14 transition-colors bg-white/[0.02]"
+              className="inline-flex items-center gap-3 border border-white/15 hover:border-[#C9A063] hover:text-[#C9A063] text-white font-semibold tracking-wide uppercase text-sm px-7 h-14 transition-colors bg-white/[0.02]"
             >
               {t.hero.cta_secondary}
             </button>
@@ -134,7 +134,7 @@ export const Hero = () => {
                 key={i}
                 className="flex items-center gap-3 border border-white/10 bg-white/[0.02] px-4 py-3"
               >
-                <span className="w-2 h-2 bg-[#00E676] block" />
+                <span className="w-2 h-2 bg-[#C9A063] block" />
                 <span className="font-mono text-[11px] tracking-[0.15em] uppercase text-zinc-300">
                   {s}
                 </span>

@@ -22,8 +22,8 @@ export const Solutions = () => {
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-16">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-5">
-              <span className="w-8 h-px bg-[#00E676]" />
-              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#00E676]">
+              <span className="w-8 h-px bg-[#C9A063]" />
+              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063]">
                 {t.solutions.overline}
               </span>
             </div>
@@ -53,7 +53,7 @@ export const Solutions = () => {
                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent" />
-                <span className="absolute top-4 left-4 font-mono text-[10px] tracking-[0.25em] uppercase text-[#00E676] bg-black/60 backdrop-blur-md px-3 py-1.5 border border-[#00E676]/30">
+                <span className="absolute top-4 left-4 font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] bg-black/60 backdrop-blur-md px-3 py-1.5 border border-[#C9A063]/30">
                   {s.tag}
                 </span>
               </div>
@@ -66,13 +66,13 @@ export const Solutions = () => {
                 <ul className="flex flex-col gap-2.5 mt-2 pt-5 border-t border-white/5">
                   {s.features.map((f, j) => (
                     <li key={j} className="flex items-start gap-3 text-sm text-zinc-300">
-                      <Check size={14} className="text-[#00E676] shrink-0 mt-0.5" strokeWidth={2.5} />
+                      <Check size={14} className="text-[#C9A063] shrink-0 mt-0.5" strokeWidth={2.5} />
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
                 <div className="mt-auto pt-6">
-                  <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-500 group-hover:text-[#00E676] transition-colors">
+                  <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-500 group-hover:text-[#C9A063] transition-colors">
                     Learn more
                     <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </span>

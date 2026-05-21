@@ -15,8 +15,8 @@ export const EngineeringTimeline = () => {
           {/* Header column */}
           <div className="lg:col-span-5">
             <div className="flex items-center gap-3 mb-5">
-              <span className="w-8 h-px bg-[#00E676]" />
-              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#00E676]">
+              <span className="w-8 h-px bg-[#C9A063]" />
+              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063]">
                 {t.engineering.overline}
               </span>
             </div>
@@ -26,7 +26,7 @@ export const EngineeringTimeline = () => {
             <p className="text-zinc-400 max-w-md">{t.engineering.sub}</p>
 
             <div className="mt-10 inline-flex items-center gap-3 border border-white/10 px-4 py-3 bg-white/[0.02]">
-              <span className="w-2 h-2 bg-[#00E676] pulse-dot rounded-full" />
+              <span className="w-2 h-2 bg-[#C9A063] pulse-dot rounded-full" />
               <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-300">
                 FAT · SAT · 24/7 Support
               </span>
@@ -35,7 +35,7 @@ export const EngineeringTimeline = () => {
 
           {/* Timeline column */}
           <div className="lg:col-span-7 relative">
-            <div className="absolute left-[15px] top-2 bottom-2 w-px bg-gradient-to-b from-[#0055A4] via-[#0055A4]/40 to-transparent" />
+            <div className="absolute left-[15px] top-2 bottom-2 w-px bg-gradient-to-b from-[#0F6B3F] via-[#0F6B3F]/40 to-transparent" />
             <div className="flex flex-col gap-12">
               {t.engineering.steps.map((s, i) => (
                 <motion.div
@@ -48,12 +48,12 @@ export const EngineeringTimeline = () => {
                   className="relative pl-12"
                 >
                   <span className="absolute left-0 top-1 w-[31px] h-[31px] flex items-center justify-center">
-                    <span className="absolute w-3 h-3 rounded-full bg-[#00E676] pulse-dot" />
-                    <span className="absolute w-[31px] h-[31px] border border-[#00E676]/30 rounded-full" />
+                    <span className="absolute w-3 h-3 rounded-full bg-[#C9A063] pulse-dot" />
+                    <span className="absolute w-[31px] h-[31px] border border-[#C9A063]/30 rounded-full" />
                   </span>
 
                   <div className="flex items-baseline gap-4 mb-2">
-                    <span className="font-mono text-[11px] tracking-[0.25em] text-[#0055A4]">
+                    <span className="font-mono text-[11px] tracking-[0.25em] text-[#0F6B3F]">
                       {s.k}
                     </span>
                     <h3 className="font-heading text-xl lg:text-2xl font-bold text-white uppercase tracking-tight">

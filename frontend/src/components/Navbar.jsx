@@ -46,10 +46,11 @@ export const Navbar = () => {
           }}
           className="flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 bg-[#0055A4] flex items-center justify-center relative">
-            <div className="absolute inset-0 border border-[#00E676]/40 translate-x-[3px] translate-y-[3px]" />
-            <span className="font-heading font-bold text-white text-lg relative">T</span>
-          </div>
+          <img
+            src="https://customer-assets.emergentagent.com/job_green-automation-pro/artifacts/im0tm1zz_Gemini_Generated_Image_6tbew96tbew96tbe.png"
+            alt="Topchampion logo"
+            className="w-11 h-11 object-contain"
+          />
           <div className="leading-tight">
             <div className="font-heading font-bold text-white text-sm tracking-tight uppercase">
               Topchampion
@@ -84,7 +85,7 @@ export const Navbar = () => {
               data-testid="lang-en"
               onClick={() => setLang("en")}
               className={`px-3 h-full font-mono text-[11px] tracking-wider transition-colors ${
-                lang === "en" ? "bg-[#0055A4] text-white" : "text-zinc-400 hover:text-white"
+                lang === "en" ? "bg-[#0F6B3F] text-white" : "text-zinc-400 hover:text-white"
               }`}
             >
               EN
@@ -93,7 +94,7 @@ export const Navbar = () => {
               data-testid="lang-cn"
               onClick={() => setLang("cn")}
               className={`px-3 h-full font-mono text-[11px] tracking-wider transition-colors ${
-                lang === "cn" ? "bg-[#0055A4] text-white" : "text-zinc-400 hover:text-white"
+                lang === "cn" ? "bg-[#0F6B3F] text-white" : "text-zinc-400 hover:text-white"
               }`}
             >
               中文
@@ -103,7 +104,7 @@ export const Navbar = () => {
           <button
             data-testid="nav-cta-quote"
             onClick={() => scrollTo("contact")}
-            className="hidden md:inline-flex items-center gap-2 bg-[#00E676] hover:bg-[#00C766] text-black font-semibold tracking-wide uppercase text-xs px-5 h-9 transition-colors"
+            className="hidden md:inline-flex items-center gap-2 bg-[#C9A063] hover:bg-[#B58D4F] text-black font-semibold tracking-wide uppercase text-xs px-5 h-9 transition-colors"
           >
             {t.nav.quote}
           </button>
@@ -138,7 +139,7 @@ export const Navbar = () => {
                 onClick={() => setLang("en")}
                 className={`px-3 py-1.5 font-mono text-xs border ${
                   lang === "en"
-                    ? "bg-[#0055A4] border-[#0055A4] text-white"
+                    ? "bg-[#0F6B3F] border-[#0F6B3F] text-white"
                     : "border-white/10 text-zinc-400"
                 }`}
               >
@@ -148,7 +149,7 @@ export const Navbar = () => {
                 onClick={() => setLang("cn")}
                 className={`px-3 py-1.5 font-mono text-xs border ${
                   lang === "cn"
-                    ? "bg-[#0055A4] border-[#0055A4] text-white"
+                    ? "bg-[#0F6B3F] border-[#0F6B3F] text-white"
                     : "border-white/10 text-zinc-400"
                 }`}
               >
@@ -157,7 +158,7 @@ export const Navbar = () => {
             </div>
             <button
               onClick={() => scrollTo("contact")}
-              className="mt-4 bg-[#00E676] text-black font-semibold py-3 uppercase text-sm tracking-wide"
+              className="mt-4 bg-[#C9A063] text-black font-semibold py-3 uppercase text-sm tracking-wide"
               data-testid="mobile-cta-quote"
             >
               {t.nav.quote}
