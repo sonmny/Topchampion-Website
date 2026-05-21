@@ -47,7 +47,7 @@ export const Navbar = () => {
           className="flex items-center gap-3 group"
         >
           <img
-            src="https://customer-assets.emergentagent.com/job_green-automation-pro/artifacts/im0tm1zz_Gemini_Generated_Image_6tbew96tbew96tbe.png"
+            src="/logo.png"
             alt="Topchampion logo"
             className="w-11 h-11 object-contain"
           />

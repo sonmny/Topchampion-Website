@@ -15,7 +15,7 @@ export const Footer = () => {
           <div className="lg:col-span-4 flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <img
-                src="https://customer-assets.emergentagent.com/job_green-automation-pro/artifacts/im0tm1zz_Gemini_Generated_Image_6tbew96tbew96tbe.png"
+                src="/logo.png"
                 alt="Topchampion logo"
                 className="w-12 h-12 object-contain"
               />
