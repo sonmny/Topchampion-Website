@@ -5,6 +5,8 @@ import { ArrowUpRight, Check } from "lucide-react";
 import { PageShell, PageHero, CTABlock } from "../components/PageShell";
 import { useLang } from "../i18n/LangContext";
 import { pages as P } from "../i18n/pages";
+import { SEO } from "../seo/SEO";
+import { serviceSchema } from "../seo/seoConfig";
 
 const IMG = {
   "tire-production": "https://images.unsplash.com/photo-1774229637247-3cd45219826c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwxfHxpbmR1c3RyaWFsJTIwcm9ib3QlMjBhcm0lMjBtYW51ZmFjdHVyaW5nfGVufDB8fHx8MTc3OTIzODQ4Mnww&ixlib=rb-4.1.0&q=85",
@@ -19,6 +21,7 @@ export const SolutionsHub = () => {
   const slugs = ["tire-production", "control-cabinets", "bess", "data-center"];
   return (
     <PageShell>
+      <SEO pageKey="solutionsHub" path="/solutions" />
       <PageHero {...p} />
       <section className="bg-[#0A0A0A] py-20 lg:py-28">
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10">
@@ -64,6 +67,11 @@ export const SolutionDetail = ({ slug }) => {
   if (!p) return <Navigate to="/404" replace />;
   return (
     <PageShell>
+      <SEO
+        pageKey={`solution.${slug}`}
+        path={`/solutions/${slug}`}
+        schema={serviceSchema(slug, lang)}
+      />
       <PageHero breadcrumb={p.breadcrumb} title={p.title} subtitle={p.subtitle} />
       <section className="bg-[#0A0A0A] py-20 lg:py-24">
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12">

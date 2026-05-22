@@ -47,6 +47,15 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
 - Admin pages at `/admin`: Login, Dashboard, Projects list/detail/form, Users (admin-only)
 - 24/24 backend + frontend admin tests pass (iteration_3)
 
+## Phase 5 (2026-02) — SEO 包
+- 安装 `react-helmet-async`，App 顶层包裹 `HelmetProvider`
+- 新增 `/app/frontend/src/seo/SEO.jsx` 复用组件 + `seoConfig.js` 双语 meta 字典（home / solutionsHub / 4 个 solution.* / engineering / cases / contact / about / careers / certifications / privacy / notFound）
+- 每个路由独立 title / description / keywords / canonical / hreflang(zh-CN+en+x-default) / Open Graph / Twitter Card
+- 首页注入 JSON-LD `Organization` + `WebSite` schema；4 个 solution 详情页各自注入 `Service` schema
+- 静态 `/public/sitemap.xml`（13 条 URL）+ `/public/robots.txt`（禁止 `/admin*`，引用 sitemap）
+- `index.html`：默认 title/description/OG/favicon 改为 Topchampion，主题色改为品牌绿 `#0F6B3F`
+- 验证：所有 9 个公开页面 title/canonical/og:url/JSON-LD 正确；CN↔EN 切换实时同步 `<html lang>` 与 `<title>`
+
 ## Phase 4 (2026-02) — 9-Point UX Update
 - Navbar: 2-line brand block (CN+EN), Contact link removed, hover/login states refined
 - Solutions: horizontal scroll w/ snap, prev/next arrows + edge-fade gradients

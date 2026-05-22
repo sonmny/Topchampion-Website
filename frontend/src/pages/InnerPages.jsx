@@ -7,12 +7,14 @@ import { CaseStudies } from "../components/CaseStudies";
 import { SmartQuoteForm } from "../components/SmartQuoteForm";
 import { useLang } from "../i18n/LangContext";
 import { pages as P } from "../i18n/pages";
+import { SEO } from "../seo/SEO";
 
 export const EngineeringPage = () => {
   const { lang } = useLang();
   const p = P[lang].engineering;
   return (
     <PageShell>
+      <SEO pageKey="engineering" path="/engineering" />
       <PageHero {...p} />
       <EngineeringTimeline />
       <CTABlock />
@@ -25,6 +27,7 @@ export const CasesPage = () => {
   const p = P[lang].cases;
   return (
     <PageShell>
+      <SEO pageKey="cases" path="/cases" />
       <PageHero {...p} />
       <CaseStudies />
       <CTABlock />
@@ -37,6 +40,7 @@ export const ContactPage = () => {
   const p = P[lang].contact;
   return (
     <PageShell>
+      <SEO pageKey="contact" path="/contact" />
       <PageHero {...p} />
       <SmartQuoteForm />
     </PageShell>
@@ -47,8 +51,12 @@ export const ContactPage = () => {
 const ContentPage = ({ pageKey }) => {
   const { lang } = useLang();
   const p = P[lang][pageKey];
+  // pageKey for SEO matches the seoConfig keys
+  const seoKey = pageKey;
+  const path = `/${pageKey}`;
   return (
     <PageShell>
+      <SEO pageKey={seoKey} path={path} />
       <PageHero breadcrumb={p.breadcrumb} title={p.title} subtitle={p.subtitle} />
       <section className="bg-[#0A0A0A] py-20 lg:py-24">
         <div className="max-w-[900px] mx-auto px-6 md:px-12 flex flex-col gap-12">
@@ -84,6 +92,7 @@ export const CertificationsPage = () => {
   const p = P[lang].certifications;
   return (
     <PageShell>
+      <SEO pageKey="certifications" path="/certifications" />
       <PageHero breadcrumb={p.breadcrumb} title={p.title} subtitle={p.subtitle} />
       <section className="bg-[#0A0A0A] py-20 lg:py-24">
         <div className="max-w-[1100px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10">
@@ -112,6 +121,7 @@ export const CertificationsPage = () => {
 export const NotFoundPage = () => {
   return (
     <PageShell>
+      <SEO pageKey="notFound" path="/404" />
       <section className="bg-[#0A0A0A] py-32 lg:py-44">
         <div className="max-w-[900px] mx-auto px-6 md:px-12 text-center">
           <div className="font-mono text-[11px] tracking-[0.3em] uppercase text-[#C9A063] mb-5">

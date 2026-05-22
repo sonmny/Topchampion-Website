@@ -32,9 +32,13 @@ import { ProjectForm } from "./admin/pages/ProjectForm";
 import { UsersList } from "./admin/pages/UsersList";
 import { AdminProfile } from "./admin/pages/AdminProfile";
 import { LeadsList, LeadDetail } from "./admin/pages/LeadsAdmin";
+import { HelmetProvider } from "react-helmet-async";
+import { SEO } from "./seo/SEO";
+import { organizationSchema, websiteSchema } from "./seo/seoConfig";
 
 const Landing = () => (
   <div className="App relative bg-[#0A0A0A] text-white min-h-screen" data-testid="landing-root">
+    <SEO pageKey="home" path="/" schema={[organizationSchema, websiteSchema]} />
     <Navbar />
     <main>
       <Hero />
@@ -56,10 +60,11 @@ const SolutionDetailRoute = () => {
 
 function App() {
   return (
-    <LangProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+    <HelmetProvider>
+      <LangProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
             {/* Public landing + inner pages */}
             <Route path="/" element={<Landing />} />
             <Route path="/solutions" element={<SolutionsHub />} />
@@ -85,23 +90,24 @@ function App() {
             <Route path="/admin/leads/:id" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </BrowserRouter>
-        <Toaster
-          position="bottom-right"
-          theme="dark"
-          toastOptions={{
-            style: {
-              background: "#0F0F0F",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: "#fff",
-              borderRadius: 0,
-              fontFamily: "'IBM Plex Sans', sans-serif",
-            },
-          }}
-        />
-      </AuthProvider>
-    </LangProvider>
+            </Routes>
+          </BrowserRouter>
+          <Toaster
+            position="bottom-right"
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: "#0F0F0F",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#fff",
+                borderRadius: 0,
+                fontFamily: "'IBM Plex Sans', sans-serif",
+              },
+            }}
+          />
+        </AuthProvider>
+      </LangProvider>
+    </HelmetProvider>
   );
 }
 
