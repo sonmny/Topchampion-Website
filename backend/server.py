@@ -182,7 +182,7 @@ class ProjectIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     client_name: Optional[str] = Field(None, max_length=200)
     customer_user_id: Optional[str] = None  # owning customer (visible to that user)
-    industry: Optional[Literal["tire_mfg", "bess", "data_center", "other"]] = None
+    industry: Optional[Literal["tire_mfg", "semiconductor", "power_generation", "auto_ev", "data_center", "bess", "other"]] = None
     plc_brand: Optional[Literal["rockwell", "siemens", "schneider", "other"]] = None
     status: Optional[Literal["draft", "in_design", "in_production", "commissioning", "delivered", "archived"]] = "draft"
     description: Optional[str] = Field(None, max_length=4000)
@@ -307,7 +307,7 @@ class Lead(BaseModel):
     company: str
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
-    industry: Literal["tire_mfg", "bess", "data_center", "other"]
+    industry: Literal["tire_mfg", "semiconductor", "power_generation", "auto_ev", "data_center", "bess", "other"]
     country: Optional[str] = None
     project_description: str
     file_meta: Optional[LeadFile] = None
@@ -329,7 +329,7 @@ async def create_lead(
     country: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
 ):
-    if industry not in ("tire_mfg", "bess", "data_center", "other"):
+    if industry not in ("tire_mfg", "semiconductor", "power_generation", "auto_ev", "data_center", "bess", "other"):
         raise HTTPException(status_code=422, detail="Invalid industry")
     if len(project_description.strip()) < 5:
         raise HTTPException(status_code=422, detail="project_description too short")

@@ -9,7 +9,7 @@ export const Footer = () => {
   const solutionLinks = [
     { label: t.footer.links.solutions[0], to: "/solutions/tire-production" },
     { label: t.footer.links.solutions[1], to: "/solutions/control-cabinets" },
-    { label: t.footer.links.solutions[2], to: "/solutions/bess" },
+    { label: t.footer.links.solutions[2], to: "/solutions/power-generation" },
     { label: t.footer.links.solutions[3], to: "/solutions/data-center" },
   ];
   const companyLinks = [
@@ -70,7 +70,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Phone size={14} className="text-[#C9A063]" />
-                <span>+86 512 0000 0000</span>
+                <span>+86 512 5790 0000</span>
               </div>
             </div>
           </div>

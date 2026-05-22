@@ -8,7 +8,7 @@ import { AdminLayout } from "../AdminLayout";
 import { toast } from "sonner";
 import { Megaphone } from "lucide-react";
 
-const INDUSTRIES = ["tire_mfg", "bess", "data_center", "other"];
+const INDUSTRIES = ["tire_mfg", "semiconductor", "power_generation", "auto_ev", "data_center", "other"];
 const PLCS = ["rockwell", "siemens", "schneider", "other"];
 const STATUSES = ["draft", "in_design", "in_production", "commissioning", "delivered", "archived"];
 

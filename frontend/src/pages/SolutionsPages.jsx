@@ -11,14 +11,14 @@ import { serviceSchema } from "../seo/seoConfig";
 const IMG = {
   "tire-production": "https://images.unsplash.com/photo-1774229637247-3cd45219826c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwxfHxpbmR1c3RyaWFsJTIwcm9ib3QlMjBhcm0lMjBtYW51ZmFjdHVyaW5nfGVufDB8fHx8MTc3OTIzODQ4Mnww&ixlib=rb-4.1.0&q=85",
   "control-cabinets": "https://images.unsplash.com/photo-1563456019560-2b37aa7ad890?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBlbGVjdHJpY2FsJTIwY29udHJvbCUyMHBhbmVsJTIwY2FiaW5ldHxlbnwwfHx8fDE3NzkyMzg0ODJ8MA&ixlib=rb-4.1.0&q=85",
-  "bess": "https://images.pexels.com/photos/17489160/pexels-photo-17489160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-  "data-center": "https://images.unsplash.com/photo-1581090700227-1e37b190418e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+  "power-generation": "https://images.unsplash.com/photo-1581090700227-1e37b190418e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+  "data-center": "https://images.pexels.com/photos/17489160/pexels-photo-17489160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
 };
 
 export const SolutionsHub = () => {
   const { lang, t } = useLang();
   const p = P[lang].solutionsHub;
-  const slugs = ["tire-production", "control-cabinets", "bess", "data-center"];
+  const slugs = ["tire-production", "control-cabinets", "power-generation", "data-center"];
   return (
     <PageShell>
       <SEO pageKey="solutionsHub" path="/solutions" />

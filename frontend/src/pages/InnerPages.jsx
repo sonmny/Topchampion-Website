@@ -78,6 +78,47 @@ const ContentPage = ({ pageKey }) => {
           ))}
         </div>
       </section>
+      {p.timeline && (
+        <section className="bg-[#070707] py-20 lg:py-24 border-t border-white/5" data-testid="about-timeline">
+          <div className="max-w-[1100px] mx-auto px-6 md:px-12">
+            <div className="flex items-center gap-3 mb-12">
+              <span className="w-8 h-px bg-[#C9A063]" />
+              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063]">
+                {lang === "cn" ? "公司发展历程" : "Development History"}
+              </span>
+            </div>
+            <div className="relative">
+              <div className="absolute left-[28px] md:left-1/2 top-0 bottom-0 w-px bg-white/10" />
+              <ol className="flex flex-col gap-10">
+                {p.timeline.map((tl, i) => (
+                  <motion.li
+                    key={i}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.5, delay: i * 0.04 }}
+                    className={`relative flex flex-col md:flex-row md:items-start gap-4 md:gap-12 ${
+                      i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
+                    }`}
+                    data-testid={`timeline-${tl.year}`}
+                  >
+                    <div className="md:w-1/2 flex items-center gap-4 md:justify-end">
+                      <span className="font-heading text-3xl md:text-4xl font-bold text-[#C9A063] tracking-tight">
+                        {tl.year}
+                      </span>
+                    </div>
+                    <span className="absolute left-[22px] md:left-1/2 top-2 -translate-x-1/2 w-3 h-3 bg-[#0F6B3F] border-2 border-[#0A0A0A] rounded-full z-10" />
+                    <div className="md:w-1/2 pl-12 md:pl-0">
+                      <h3 className="font-heading text-lg font-bold text-white tracking-tight mb-1">{tl.t}</h3>
+                      <p className="text-sm text-zinc-400 leading-relaxed max-w-md">{tl.d}</p>
+                    </div>
+                  </motion.li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </section>
+      )}
       <CTABlock />
     </PageShell>
   );

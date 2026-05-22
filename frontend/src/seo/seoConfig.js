@@ -9,30 +9,30 @@ export const SITE = {
     cn: "苏州赛冠电气与自动化",
   },
   defaultKeywords: {
-    en: "industrial automation, PLC integration, BESS, control cabinets, MES, SCADA, ABB MNS-E, Rittal Ri4Power, data center distribution, Suzhou",
-    cn: "工业自动化, PLC 集成, BESS 储能, 控制柜, MES, SCADA, ABB MNS-E, Rittal Ri4Power, 数据中心配电, 苏州赛冠",
+    en: "industrial automation, PLC integration, gen-set control, switchgear, control cabinets, MES, SCADA, ABB MNS-E, Rittal Ri4Power, Rockwell, ComAp, semiconductor cleanroom, data center distribution, Kunshan, Suzhou, V-POWER, Goodyear, TSMC",
+    cn: "工业自动化, PLC 集成, 发电机组控制, 开关柜, 控制柜, MES, SCADA, ABB MNS-E, Rittal Ri4Power, Rockwell, ComAp, 半导体洁净厂房, 数据中心配电, 昆山, 苏州赛冠, V-POWER, 固铂, 台积电",
   },
 };
 
 export const seoConfig = {
   home: {
     en: {
-      title: "Suzhou Topchampion Automation — Industrial PLC, BESS & Green Power Integrator",
-      description: "Suzhou Topchampion Automation engineers turnkey industrial automation: tire production lines, ABB/Rittal control cabinets, BESS integration, and green data center distribution. ISO 9001 · IEC 61439 · UL 891.",
+      title: "Suzhou Topchampion Automation — Since 2005 · PLC, Switchgear & Gen-Set Control Integrator",
+      description: "20 years of PLC, MCC, ABB MNS-E switchgear and gen-set control systems for tire production (Goodyear, Pirelli), semiconductor (TSMC, SMIC), gas power stations (V-POWER), automotive (BMW, Ford, VinFast) and data centers (Huawei, Alibaba). ISO 9001 · National High-Tech Enterprise.",
     },
     cn: {
-      title: "苏州赛冠自动化 — 工业 PLC、BESS 储能与绿色电力系统集成商",
-      description: "苏州赛冠提供交钥匙工业自动化方案：轮胎生产线、ABB/Rittal 控制柜、BESS 储能集成与绿色数据中心配电。ISO 9001 · IEC 61439 · UL 891。",
+      title: "苏州赛冠工业自动化 — 2005 年成立 · PLC、开关柜与发电机组控制集成商",
+      description: "20 年 PLC、MCC、ABB MNS-E 开关柜与发电机组控制系统经验,服务固铂、倍耐力、台积电、中芯、V-POWER、宝马、福特、VinFast、华为、阿里巴巴等客户。ISO 9001、国家高新技术企业。",
     },
   },
   solutionsHub: {
     en: {
-      title: "Solutions — Tire Lines · Control Cabinets · BESS · Data Centers | Topchampion",
-      description: "Four flagship solution lines from Suzhou Topchampion: MES-orchestrated tire production, ABB MNS-E and Rittal Ri4Power cabinets, MWh-scale BESS, and Tier-rated data center distribution.",
+      title: "Solutions — Tire · Switchgear · Gen-Set · Cleanroom | Topchampion",
+      description: "Four core solution lines from Suzhou Topchampion: MES-integrated tire production, ABB MNS-E + Rittal Ri4Power cabinets, gas/diesel gen-set control (V-POWER, ComAp), and semiconductor cleanroom + data center distribution.",
     },
     cn: {
-      title: "解决方案 — 轮胎产线·控制柜·BESS·数据中心 | 苏州赛冠",
-      description: "苏州赛冠四大核心解决方案：MES 调度的轮胎生产线、ABB MNS-E 与 Rittal Ri4Power 控制柜、MWh 级 BESS 储能集成、Tier 级数据中心配电。",
+      title: "解决方案 — 轮胎·控制柜·发电机组·洁净厂房 | 苏州赛冠",
+      description: "苏州赛冠四大核心解决方案:MES 集成轮胎生产线、ABB MNS-E 与 Rittal Ri4Power 控制柜、燃气/柴油机组控制(V-POWER、ComAp)、半导体洁净厂房与数据中心配电。",
     },
   },
   "solution.tire-production": {
@@ -55,14 +55,14 @@ export const seoConfig = {
       description: "采用 ABB MNS-E 与 Rittal Ri4Power 的型式试验低压/高压控制柜。符合 IEC 61439 / UL 891，弧故障防护，面向关键任务可靠性。",
     },
   },
-  "solution.bess": {
+  "solution.power-generation": {
     en: {
-      title: "Battery Energy Storage Integration — Utility-Scale BESS / PCS / EMS | Topchampion",
-      description: "MWh-class BESS distribution, on-grid / off-grid PCS coordination, and EMS — from 80 MWh pilots to 220 MWh deployments without re-engineering.",
+      title: "Gas / Diesel Gen-Set Control — V-POWER, ComAp, Trilogy Power | Topchampion",
+      description: "Generator station control cabinets for gas and diesel power plants. References: V-POWER Singapore & Myanmar, ComAp SE Asia, Trilogy Power (US → Canada). 1 MW to 50 MW stations, ComAp InteliGen / InteliSys.",
     },
     cn: {
-      title: "电池储能集成 — 公用事业级 BESS / PCS / EMS | 苏州赛冠",
-      description: "MWh 级 BESS 配电、并网/离网 PCS 协同与 EMS —— 从 80 MWh 试点到 220 MWh 部署，无需重新设计。",
+      title: "燃气/柴油机组控制 — V-POWER · ComAp · Trilogy Power | 苏州赛冠",
+      description: "燃气与柴油发电站机组控制柜。参考项目：V-POWER 新加坡与缅甸、ComAp 东南亚、Trilogy Power（美→加）。1 MW 至 50 MW 电站，ComAp InteliGen / InteliSys 平台。",
     },
   },
   "solution.data-center": {
@@ -87,12 +87,12 @@ export const seoConfig = {
   },
   cases: {
     en: {
-      title: "Case Studies — Tire, BESS & Data Center Deployments | Topchampion",
-      description: "Mission-critical floors trust Topchampion across Asia, Europe, and MENA — tire manufacturing, MWh-scale BESS, and hyperscale data centers.",
+      title: "Case Studies — V-POWER, Goodyear, TSMC, BMW, Ford | Topchampion",
+      description: "Real projects delivered by Suzhou Topchampion: V-POWER gas power stations (Singapore + Myanmar), Goodyear USA tire lines, TSMC Shanghai cleanroom, BMW Shenyang R4 panels exported to Germany, Ford & VinFast Vietnam paint shops.",
     },
     cn: {
-      title: "案例研究 — 轮胎、BESS 与数据中心部署 | 苏州赛冠",
-      description: "我们的关键任务现场遍及亚洲、欧洲与中东 —— 涵盖轮胎制造、MWh 级 BESS 储能与超大规模数据中心。",
+      title: "案例研究 — V-POWER · 固铂 · 台积电 · 宝马 · 福特 | 苏州赛冠",
+      description: "苏州赛冠真实交付项目:V-POWER 燃气电站(新加坡+缅甸)、固铂美国轮胎产线、台积电上海洁净厂房、宝马沈阳 R4 Panel 出口德国、福特与 VinFast 越南涂装线。",
     },
   },
   contact: {
@@ -161,15 +161,17 @@ export const seoConfig = {
 export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Suzhou Topchampion Automation Co., Ltd.",
-  alternateName: ["苏州赛冠电气与自动化", "Topchampion Electric & Automation"],
+  name: "Suzhou Topchampion Industrial Automation Technology Co., Ltd.",
+  alternateName: ["苏州赛冠工业自动化技术有限公司", "Topchampion Electric & Automation", "赛冠工业自动化"],
   url: SITE.url,
   logo: `${SITE.url}${SITE.ogImage}`,
-  description: "Industrial automation, BESS integration, and control cabinet engineering company headquartered in Suzhou Industrial Park, China.",
-  foundingLocation: { "@type": "Place", name: "Suzhou Industrial Park, China" },
+  description: "Industrial automation, power distribution, gen-set control and switchgear manufacturer founded May 2005 in Kunshan, Jiangsu, China. National High-Tech Enterprise (2024). Authorized ABB manufacturer, Rockwell system integrator, Rittal Ri4Power partner.",
+  foundingDate: "2005-05",
+  foundingLocation: { "@type": "Place", name: "Kunshan, Jiangsu, China" },
   address: {
     "@type": "PostalAddress",
-    addressLocality: "Suzhou",
+    streetAddress: "Building 009, No.19 Taihong Road, Yushan Town",
+    addressLocality: "Kunshan",
     addressRegion: "Jiangsu",
     addressCountry: "CN",
   },
@@ -177,20 +179,25 @@ export const organizationSchema = {
   knowsAbout: [
     "Industrial Automation",
     "PLC Integration",
-    "Battery Energy Storage Systems (BESS)",
+    "Gas & Diesel Generator Set Control",
     "Low-Voltage Switchgear",
     "ABB MNS-E",
     "Rittal Ri4Power",
+    "Rockwell Automation",
+    "ComAp Gen-Set Controllers",
+    "Tire Production Line Automation",
+    "Semiconductor Cleanroom PLC",
     "Data Center Power Distribution",
     "MES",
     "SCADA",
   ],
   hasCredential: [
-    "ISO 9001:2015",
+    "ISO 9001:2015 (since 2006)",
+    "CCC Product Certification (since 2007)",
+    "CE Marking (since 2020)",
+    "National High-Tech Enterprise (2024, GR202432006352)",
     "IEC 61439",
     "UL 891",
-    "IEEE 1547",
-    "UL 9540",
   ],
 };
 

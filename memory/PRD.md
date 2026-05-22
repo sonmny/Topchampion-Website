@@ -47,6 +47,27 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
 - Admin pages at `/admin`: Login, Dashboard, Projects list/detail/form, Users (admin-only)
 - 24/24 backend + frontend admin tests pass (iteration_3)
 
+## Phase 6 (2026-02) — Real Content Integration (Topchampion 2025 catalog)
+- 整合官方 PPTX(简介Catalog 2025 V1.0) + PDF(宣传资料) 真实公司资料
+- **公司事实修正**：
+  - 成立 **2005年5月**(非2007),20 年历史
+  - 真实地址 **江苏苏州昆山玉山镇台虹路19号009栋**(非苏州工业园区)
+  - 全球 4 据点：昆山总部 + 淮安工厂(2012) + 越南工厂(2019) + 柬埔寨办事处(2019)
+  - 真实公司全称：**苏州赛冠工业自动化技术有限公司**(国家高新技术企业 GR202432006352, 2024)
+- **解决方案重组**(BESS → 电站与发电机组控制)：
+  - URL: `/solutions/bess` 已重命名为 `/solutions/power-generation`(sitemap 已同步)
+  - 第 3 个方案现为"燃气/柴油机组控制",主打 V-POWER 新加坡 & 缅甸、ComAp 东南亚、Trilogy Power(美→加)
+  - 第 4 个方案重新定位为"洁净厂房与数据中心配电",覆盖 TSMC、SMIC、天马、华星、华为、阿里、富士康
+  - Backend `industry` Literal 扩展：tire_mfg / semiconductor / power_generation / auto_ev / data_center / bess(legacy) / other
+- **About 页新增 Timeline 组件**：2005 → 2024 共 11 个里程碑(ISO 9001 / ABB / Rockwell / Rittal / 高新等)
+- **首页新增 Clients 组件**：6 大行业分组展示真实客户名单(文本形式,无 logo)
+- **真实案例研究**：CaseStudies 三条引言改为 V-POWER 新加坡、V-POWER 缅甸、固铂(美国)轮胎产线
+- **合作伙伴与认证刷新**：Trust Bar 显示真实合作年份(ABB 2007 · Rockwell 2018 · Rittal 2020 · ComAp · ISO 9001 since 2006 · 国家高新技术企业 2024)
+- **Stats 数字真实化**：20 年 · 4 据点 · 27+ 国家 · 1,500+ 柜/年
+- **Footer**：真实昆山地址、电话 +86 512 5790 0000、版权"自 2005 年起"、5 项真实认证
+- **SEO**：Organization JSON-LD 含 foundingDate=2005-05、真实地址、knowsAbout 扩展(ComAp/V-POWER/Goodyear/TSMC)、所有页 meta keywords/description 全部刷新
+- **验证**：Playwright 截图所有页 OK、POST /api/leads industry=power_generation 返回 201、/solutions/bess 正确 404
+
 ## Phase 5 (2026-02) — SEO 包
 - 安装 `react-helmet-async`，App 顶层包裹 `HelmetProvider`
 - 新增 `/app/frontend/src/seo/SEO.jsx` 复用组件 + `seoConfig.js` 双语 meta 字典（home / solutionsHub / 4 个 solution.* / engineering / cases / contact / about / careers / certifications / privacy / notFound）
@@ -68,7 +89,6 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
 
 ## Backlog (Future)
 - **P1**: Email notification to sales on new lead (Resend/SendGrid)
-- **P1**: SEO — per-route `<title>`/meta via react-helmet-async + JSON-LD Organization + sitemap.xml
 - **P2**: Replace text partner badges with actual ABB/Rittal/Rockwell logos when supplied
 - **P2**: True PATCH semantics on `/api/projects/{id}` (all-Optional `ProjectUpdate` model)
 - **P2**: Migrate FastAPI `on_event` startup/shutdown to lifespan context
