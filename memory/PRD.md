@@ -47,7 +47,21 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
 - Admin pages at `/admin`: Login, Dashboard, Projects list/detail/form, Users (admin-only)
 - 24/24 backend + frontend admin tests pass (iteration_3)
 
-## Phase 6 (2026-02) — Real Content Integration (Topchampion 2025 catalog)
+## Phase 7 (2026-02) — 真实资料整合 + 邮件管道
+- **真实图片**：从官方 PPTX 提取并优化(Pillow 压缩 + 转 JPG):
+  - 证书:ISO 9001 中英双版(`/assets/certs/iso9001-{cn,en}.jpg`),按当前语言渲染
+  - 产品:出货 MCC 柜体、NANYA 车间柜体行、PLC+HMI 控制柜、Schneider 开关柜(`/assets/products/*.jpg`)
+- **认证页改造**：新增 `certs-gallery` 区,ISO 9001 缩略图(点击可全屏放大)+ 国家高新企业卡片(真实编号 GR202432006352)
+- **About 页 hero**：植入真实"昆山赛冠车间出货 MCC 柜体"照片
+- **Solutions 详情页图片**：4 个详情页 hero image 全部替换为真实柜体/控制盘产品图
+- **邮件通知管道**：
+  - 安装 `resend>=2.0.0`
+  - 新模块 `/app/backend/notifications.py`:async `send_new_lead_email()`,无 KEY 时安全 skip
+  - 邮件模板:HTML 表格 + 品牌色,含 Lead ID / 行业 / 国家 / 描述 / 附件信息;reply_to 自动指向客户邮箱
+  - 接入 `POST /api/leads`(FastAPI BackgroundTasks 非阻塞)
+  - 新 env vars:`RESEND_API_KEY`(空,待用户启用)、`SENDER_EMAIL=onboarding@resend.dev`、`SALES_NOTIFY_EMAIL=lc-l@topcp.net`
+  - **当前状态**:用户选择 Phase B(暂不注册 Resend),Skip 模式已验证(curl POST /api/leads 201 + 日志 skip 记录)
+
 - 整合官方 PPTX(简介Catalog 2025 V1.0) + PDF(宣传资料) 真实公司资料
 - **公司事实修正**：
   - 成立 **2005年5月**(非2007),20 年历史
