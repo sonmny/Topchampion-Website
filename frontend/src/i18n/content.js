@@ -8,6 +8,7 @@ export const content = {
       cases: "Case Studies",
       contact: "Contact",
       quote: "Request a Smart Quote",
+      login: "Sign in",
     },
     hero: {
       overline: "Suzhou Topchampion Automation · 苏州赛冠",
@@ -164,6 +165,7 @@ export const content = {
       cases: "案例研究",
       contact: "联系我们",
       quote: "获取智能报价",
+      login: "登录",
     },
     hero: {
       overline: "苏州赛冠自动化 · Suzhou Topchampion",

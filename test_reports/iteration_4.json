@@ -1,0 +1,39 @@
+{
+  "summary": "Iteration 4 (showcase + /api/cases + file category/display_name/thumb + self-profile + navbar updates) fully verified. Backend: 17/17 new pytest cases pass plus 24/24 prior regression (test_admin_api.py) still green (test_leads.py has 2 outdated cases from iter 1 — not regressions; GET /api/leads is now admin-protected by design). Frontend: 18/18 UI assertions pass — 2-line brand, nav-cta-login → /admin/login, EN/CN toggle causes no nav-height or hero-height shift, sidebar brand updated to '后台系统/Admin Console' (old 'Topchampion 后台' gone), /admin/profile working (prefilled username, password mismatch toast), ProjectForm has no parameters/drawing_urls fields, showcase toggle reveals 4 sub-inputs, ProjectDetail has separate 图纸/技术代码 sections + toggle-showcase-btn + thumbnails. /api/cases public endpoint returns 200 with the live showcased project (no sensitive fields).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/projects/{id} PATCH", "issue": "Still uses ProjectIn (name required). Pre-existing from iter 3; UI always sends full payload. Consider a ProjectUpdate model with Optional fields for true PATCH semantics."},
+      {"endpoint": "/api/leads GET (test_leads.py legacy tests)", "issue": "Old iteration-1 tests expect GET /api/leads to be public (200) — endpoint is now admin-only (401). The tests are outdated, not a regression."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Navbar brand subtitle", "issues": ["Underlying text is 'Topchampion Electric & Automation' (mixed case); appears uppercase via CSS text-transform — visual result matches spec but assertive testing tools that read DOM text will see mixed case. Functionally correct."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration4.py",
+    "/app/backend/tests/test_admin_api.py",
+    "/app/test_reports/pytest/iteration_4_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Console hydration warning observed on ProjectForm: '<span> cannot be a child of <option>'. Source appears to be Emergent visual-editor instrumentation (x-ve-dynamic / x-excluded spans) wrapping JSX expressions inside <option>{...}</option>. Not user code, but it may produce a console error in production builds. To silence: render plain option text as a single string (no JSX expression children) e.g. <option key={u.id} value={u.id}>{`${u.username} — ${u.full_name||''}`}</option>.",
+    "server.py /api/auth/me PATCH does not invalidate the existing JWT after a password or username change. Acceptable here (12h token), but worth noting — token still embeds old username; a refresh endpoint or short token TTL would be safer.",
+    "Public /api/cases ordering uses 'updated_at' which is updated by every showcase toggle — fine. Confirmed sensitive fields (password_hash, files, created_by, customer_user_id) are NOT returned by projection.",
+    "ProjectIn.parameters / drawing_urls remain in the schema as legacy (no longer editable). Good backward-compat decision."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration4.py (new — 17 cases)"
+  ],
+  "success_rate": {"backend": "100% (17/17 new + 24/24 regression)", "frontend": "100% (18/18 UI assertions)"},
+  "test_credentials": "admin / Topchampion (seeded)",
+  "seed_data_creation": "test_iteration4.py creates TEST_user_*, TEST_cust_*, and TEST_SC_* project, then cleans them up in the module fixture teardown. No leftover data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run backend with: pytest /app/backend/tests/test_iteration4.py /app/backend/tests/test_admin_api.py -v. The /app/backend/tests/test_leads.py file has 2 outdated cases expecting GET /api/leads to be public; safe to ignore or update. Frontend uses these new testids: nav-cta-login, admin-nav-profile, profile-root, profile-username, profile-current-password, profile-new-password, profile-confirm-password, profile-save-basic, profile-save-password, pf-is-showcase, pf-sc-industry/metric/quote/author, section-drawing, section-code, upload-drawing-btn, upload-code-btn, file-card-{id}, rename-{id}, rename-input-{id}, rename-save-{id}, toggle-showcase-btn, showcase_badge. Login page does NOT use input[name=username] — use the data-testid on inputs or positional <input> (form has 2 inputs). Default lang is CN.",
+  "rca_of_the_issue": "No blocking bugs. One minor console warning (hydration: <span> inside <option>) traced to Emergent visual-editor instrumentation injecting tracking spans into JSX expressions inside <option>{...}</option>. Workaround: avoid expression children in <option>; concatenate string before render."
+}

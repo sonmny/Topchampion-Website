@@ -30,6 +30,7 @@ import { ProjectsList } from "./admin/pages/ProjectsList";
 import { ProjectDetail } from "./admin/pages/ProjectDetail";
 import { ProjectForm } from "./admin/pages/ProjectForm";
 import { UsersList } from "./admin/pages/UsersList";
+import { AdminProfile } from "./admin/pages/AdminProfile";
 
 const Landing = () => (
   <div className="App relative bg-[#0A0A0A] text-white min-h-screen" data-testid="landing-root">
@@ -78,6 +79,7 @@ function App() {
             <Route path="/admin/projects/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/edit" element={<ProtectedRoute allowed={["admin"]}><ProjectForm mode="edit" /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowed={["admin"]}><UsersList /></ProtectedRoute>} />
+            <Route path="/admin/profile" element={<ProtectedRoute><AdminProfile /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

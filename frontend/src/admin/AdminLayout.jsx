@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, Users, LogOut, Globe } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Users, LogOut, Globe, UserCircle } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { useLang } from "../i18n/LangContext";
 import { adminI18n } from "../i18n/admin";
@@ -18,6 +18,7 @@ export const AdminLayout = ({ children }) => {
   if (user?.role === "admin") {
     links.push({ to: "/admin/users", label: t.nav.users, icon: Users });
   }
+  links.push({ to: "/admin/profile", label: t.nav.profile, icon: UserCircle });
 
   const doLogout = async () => {
     await logout();
@@ -33,7 +34,7 @@ export const AdminLayout = ({ children }) => {
           <div className="leading-tight">
             <div className="font-heading font-bold text-sm uppercase tracking-tight">{t.brand}</div>
             <div className="font-mono text-[9px] text-zinc-500 tracking-[0.2em] uppercase">
-              Topchampion · 苏州赛冠
+              苏州赛冠 · Topchampion
             </div>
           </div>
         </div>

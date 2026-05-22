@@ -6,6 +6,7 @@ import { adminI18n } from "../../i18n/admin";
 import { api, formatApiError } from "../apiClient";
 import { AdminLayout } from "../AdminLayout";
 import { toast } from "sonner";
+import { Megaphone } from "lucide-react";
 
 const INDUSTRIES = ["tire_mfg", "bess", "data_center", "other"];
 const PLCS = ["rockwell", "siemens", "schneider", "other"];
@@ -19,8 +20,11 @@ const empty = {
   plc_brand: "",
   status: "draft",
   description: "",
-  parameters_text: "",
-  drawing_urls_text: "",
+  is_showcase: false,
+  showcase_industry: "",
+  showcase_quote: "",
+  showcase_author: "",
+  showcase_metric: "",
 };
 
 export const ProjectForm = ({ mode }) => {
@@ -37,9 +41,7 @@ export const ProjectForm = ({ mode }) => {
   const isEdit = mode === "edit";
 
   useEffect(() => {
-    if (user && user.role !== "admin") {
-      navigate("/admin/projects");
-    }
+    if (user && user.role !== "admin") navigate("/admin/projects");
   }, [user, navigate]);
 
   useEffect(() => {
@@ -59,8 +61,11 @@ export const ProjectForm = ({ mode }) => {
             plc_brand: data.plc_brand || "",
             status: data.status || "draft",
             description: data.description || "",
-            parameters_text: data.parameters ? JSON.stringify(data.parameters, null, 2) : "",
-            drawing_urls_text: (data.drawing_urls || []).join("\n"),
+            is_showcase: !!data.is_showcase,
+            showcase_industry: data.showcase_industry || "",
+            showcase_quote: data.showcase_quote || "",
+            showcase_author: data.showcase_author || "",
+            showcase_metric: data.showcase_metric || "",
           });
         } catch (e) {
           toast.error(formatApiError(e));
@@ -76,21 +81,6 @@ export const ProjectForm = ({ mode }) => {
 
   const submit = async (e) => {
     e.preventDefault();
-    let parameters = null;
-    if (form.parameters_text.trim()) {
-      try {
-        parameters = JSON.parse(form.parameters_text);
-        if (typeof parameters !== "object" || Array.isArray(parameters)) throw new Error();
-      } catch {
-        toast.error(t.project_form.params_invalid);
-        return;
-      }
-    }
-    const drawing_urls = form.drawing_urls_text
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
     const payload = {
       name: form.name.trim(),
       client_name: form.client_name.trim() || null,
@@ -99,8 +89,11 @@ export const ProjectForm = ({ mode }) => {
       plc_brand: form.plc_brand || null,
       status: form.status,
       description: form.description.trim() || null,
-      parameters,
-      drawing_urls,
+      is_showcase: form.is_showcase,
+      showcase_industry: form.showcase_industry.trim() || null,
+      showcase_quote: form.showcase_quote.trim() || null,
+      showcase_author: form.showcase_author.trim() || null,
+      showcase_metric: form.showcase_metric.trim() || null,
     };
     setSaving(true);
     try {
@@ -182,32 +175,47 @@ export const ProjectForm = ({ mode }) => {
             </Field>
           </div>
 
-          <div className="md:col-span-2">
-            <Field label={t.project_form.f_parameters}>
-              <textarea
-                data-testid="pf-parameters"
-                rows={5}
-                value={form.parameters_text}
-                onChange={(e) => update("parameters_text", e.target.value)}
-                className="industrial-input font-mono text-xs"
-                style={{ height: "auto", padding: "12px 16px" }}
-                placeholder='{ "capacity_mwh": 80, "voltage_kv": 35 }'
-              />
-            </Field>
-          </div>
+          {/* Showcase section */}
+          <div className="md:col-span-2 border-t border-white/10 pt-6 mt-2">
+            <div className="flex items-start gap-4 mb-5">
+              <Megaphone size={18} className="text-[#C9A063] shrink-0 mt-1" />
+              <div className="flex-1">
+                <div className="font-heading text-lg font-bold text-white uppercase tracking-tight">{t.project_form.showcase_section}</div>
+                <p className="text-xs text-zinc-400 mt-1">{t.project_form.showcase_hint}</p>
+              </div>
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  data-testid="pf-is-showcase"
+                  type="checkbox"
+                  checked={form.is_showcase}
+                  onChange={(e) => update("is_showcase", e.target.checked)}
+                  className="sr-only peer"
+                />
+                <span className="w-11 h-6 bg-zinc-800 border border-white/10 relative transition-colors peer-checked:bg-[#0F6B3F] peer-checked:border-[#0F6B3F] after:content-[''] after:absolute after:left-0.5 after:top-0.5 after:w-4 after:h-4 after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
+                <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-zinc-400 whitespace-nowrap">{t.project_form.f_is_showcase}</span>
+              </label>
+            </div>
 
-          <div className="md:col-span-2">
-            <Field label={t.project_form.f_drawing_urls}>
-              <textarea
-                data-testid="pf-drawing-urls"
-                rows={3}
-                value={form.drawing_urls_text}
-                onChange={(e) => update("drawing_urls_text", e.target.value)}
-                className="industrial-input font-mono text-xs"
-                style={{ height: "auto", padding: "12px 16px" }}
-                placeholder="https://drive.google.com/..."
-              />
-            </Field>
+            {form.is_showcase && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Field label={t.project_form.f_showcase_industry}>
+                  <input data-testid="pf-sc-industry" value={form.showcase_industry} onChange={(e) => update("showcase_industry", e.target.value)} placeholder={t.project_form.f_showcase_industry_ph} className="industrial-input" />
+                </Field>
+                <Field label={t.project_form.f_showcase_metric}>
+                  <input data-testid="pf-sc-metric" value={form.showcase_metric} onChange={(e) => update("showcase_metric", e.target.value)} placeholder={t.project_form.f_showcase_metric_ph} className="industrial-input" />
+                </Field>
+                <div className="md:col-span-2">
+                  <Field label={t.project_form.f_showcase_quote}>
+                    <textarea data-testid="pf-sc-quote" rows={3} value={form.showcase_quote} onChange={(e) => update("showcase_quote", e.target.value)} placeholder={t.project_form.f_showcase_quote_ph} className="industrial-input" style={{ height: "auto", padding: "12px 16px" }} />
+                  </Field>
+                </div>
+                <div className="md:col-span-2">
+                  <Field label={t.project_form.f_showcase_author}>
+                    <input data-testid="pf-sc-author" value={form.showcase_author} onChange={(e) => update("showcase_author", e.target.value)} placeholder={t.project_form.f_showcase_author_ph} className="industrial-input" />
+                  </Field>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2 flex items-center justify-end gap-3 pt-4 border-t border-white/5">

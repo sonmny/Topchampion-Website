@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLang } from "../i18n/LangContext";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 
 export const Navbar = () => {
   const { lang, setLang, t } = useLang();
@@ -55,11 +55,11 @@ export const Navbar = () => {
             className="w-11 h-11 object-contain"
           />
           <div className="leading-tight">
-            <div className="font-heading font-bold text-white text-sm tracking-tight uppercase">
-              Topchampion
+            <div className="font-heading font-bold text-white text-[13px] tracking-tight uppercase whitespace-nowrap">
+              Topchampion Electric &amp; Automation
             </div>
-            <div className="font-mono text-[10px] text-zinc-500 tracking-[0.2em] uppercase">
-              苏州赛冠 · Electric &amp; Automation
+            <div className="font-mono text-[10px] text-zinc-500 tracking-[0.18em] uppercase whitespace-nowrap">
+              苏州赛冠 电气 &amp; 自动化
             </div>
           </div>
         </a>
@@ -118,6 +118,15 @@ export const Navbar = () => {
           </button>
 
           <button
+            data-testid="nav-cta-login"
+            onClick={() => goTo("/admin/login")}
+            className="hidden md:inline-flex items-center gap-2 border border-white/15 hover:border-[#0F6B3F] hover:text-white hover:bg-[#0F6B3F] text-zinc-300 font-semibold tracking-wide uppercase text-xs px-5 h-9 transition-colors"
+          >
+            <LogIn size={13} />
+            {t.nav.login}
+          </button>
+
+          <button
             data-testid="mobile-menu-toggle"
             onClick={() => setOpen((v) => !v)}
             className="lg:hidden w-9 h-9 flex items-center justify-center border border-white/10 text-white"
@@ -170,6 +179,14 @@ export const Navbar = () => {
               data-testid="mobile-cta-quote"
             >
               {t.nav.quote}
+            </button>
+            <button
+              onClick={() => goTo("/admin/login")}
+              className="bg-[#0F6B3F] text-white font-semibold py-3 uppercase text-sm tracking-wide flex items-center justify-center gap-2"
+              data-testid="mobile-cta-login"
+            >
+              <LogIn size={14} />
+              {t.nav.login}
             </button>
           </div>
         </div>

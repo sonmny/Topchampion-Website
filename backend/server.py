@@ -12,11 +12,19 @@ from typing import List, Optional, Literal
 
 import bcrypt
 import jwt
+import base64
+import io
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
+
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except Exception:
+    PIL_AVAILABLE = False
 
 
 # ---------------- Config ----------------
@@ -139,9 +147,12 @@ class UserUpdate(BaseModel):
 class ProjectFile(BaseModel):
     id: str
     filename: str
+    display_name: Optional[str] = None
+    category: Literal["code", "drawing"] = "drawing"
     size: int
     content_type: str
     uploaded_at: datetime
+    thumb_b64: Optional[str] = None  # base64 PNG data-uri for image previews
 
 
 class ProjectIn(BaseModel):
@@ -152,8 +163,34 @@ class ProjectIn(BaseModel):
     plc_brand: Optional[Literal["rockwell", "siemens", "schneider", "other"]] = None
     status: Optional[Literal["draft", "in_design", "in_production", "commissioning", "delivered", "archived"]] = "draft"
     description: Optional[str] = Field(None, max_length=4000)
-    parameters: Optional[dict] = None  # arbitrary key/value technical parameters
-    drawing_urls: Optional[List[str]] = None  # external drawing links
+    parameters: Optional[dict] = None  # arbitrary key/value technical parameters (legacy, no longer editable from UI)
+    drawing_urls: Optional[List[str]] = None  # external drawing links (legacy, no longer editable from UI)
+    # Public showcase / case-study fields (editable by admin + user)
+    is_showcase: Optional[bool] = False
+    showcase_industry: Optional[str] = Field(None, max_length=120)
+    showcase_quote: Optional[str] = Field(None, max_length=600)
+    showcase_author: Optional[str] = Field(None, max_length=120)
+    showcase_metric: Optional[str] = Field(None, max_length=60)
+
+
+class ShowcaseUpdate(BaseModel):
+    is_showcase: bool
+    showcase_industry: Optional[str] = Field(None, max_length=120)
+    showcase_quote: Optional[str] = Field(None, max_length=600)
+    showcase_author: Optional[str] = Field(None, max_length=120)
+    showcase_metric: Optional[str] = Field(None, max_length=60)
+
+
+class FileUpdate(BaseModel):
+    display_name: Optional[str] = Field(None, max_length=200)
+    category: Optional[Literal["code", "drawing"]] = None
+
+
+class SelfProfileUpdate(BaseModel):
+    full_name: Optional[str] = Field(None, max_length=120)
+    current_password: Optional[str] = None
+    new_password: Optional[str] = Field(None, min_length=6, max_length=128)
+    new_username: Optional[str] = Field(None, min_length=2, max_length=64)
 
 
 class ProjectOut(ProjectIn):
@@ -424,31 +461,86 @@ async def delete_project(pid: str, _: dict = Depends(require_admin)):
     await db.projects.delete_one({"id": pid})
 
 
+def _make_thumb_b64(data: bytes, content_type: str, suffix: str) -> Optional[str]:
+    """Generate a small base64 PNG data-uri thumbnail for image files only."""
+    if not PIL_AVAILABLE:
+        return None
+    is_image = (content_type or "").startswith("image/") or suffix in (".png", ".jpg", ".jpeg", ".webp")
+    if not is_image:
+        return None
+    try:
+        im = Image.open(io.BytesIO(data))
+        im.thumbnail((280, 280))
+        if im.mode not in ("RGB", "RGBA"):
+            im = im.convert("RGB")
+        buf = io.BytesIO()
+        im.save(buf, format="PNG", optimize=True)
+        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    except Exception:
+        return None
+
+
 @projects_router.post("/{pid}/files", response_model=ProjectFile, status_code=201)
-async def upload_project_file(pid: str, file: UploadFile = File(...), _: dict = Depends(require_admin)):
+async def upload_project_file(
+    pid: str,
+    file: UploadFile = File(...),
+    category: str = Form("drawing"),
+    display_name: Optional[str] = Form(None),
+    _: dict = Depends(require_admin),
+):
     project = await db.projects.find_one({"id": pid}, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if category not in ("code", "drawing"):
+        category = "drawing"
     data = await file.read()
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail=f"File too large (max {MAX_UPLOAD_BYTES // (1024*1024)} MB)")
     file_id = str(uuid.uuid4())
     suffix = Path(file.filename or "").suffix.lower() or ".bin"
-    if suffix not in (".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".bin"):
+    if suffix not in (".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".bin", ".txt", ".json", ".xml", ".yaml", ".yml", ".py", ".js", ".csv"):
         suffix = ".bin"
     disk_path = UPLOAD_DIR / f"{file_id}{suffix}"
     with open(disk_path, "wb") as fh:
         fh.write(data)
+    content_type = file.content_type or mimetypes.guess_type(file.filename or "")[0] or "application/octet-stream"
+    thumb = _make_thumb_b64(data, content_type, suffix)
     meta = {
         "id": file_id,
         "filename": file.filename or f"upload{suffix}",
+        "display_name": (display_name or "").strip() or None,
+        "category": category,
         "size": len(data),
-        "content_type": file.content_type or mimetypes.guess_type(file.filename or "")[0] or "application/octet-stream",
+        "content_type": content_type,
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "thumb_b64": thumb,
         "_ext": suffix,
     }
     await db.projects.update_one({"id": pid}, {"$push": {"files": meta}, "$set": {"updated_at": meta["uploaded_at"]}})
     out = {k: v for k, v in meta.items() if not k.startswith("_")}
+    return _serialize(out)
+
+
+@projects_router.patch("/{pid}/files/{file_id}", response_model=ProjectFile)
+async def update_project_file(pid: str, file_id: str, payload: FileUpdate, _: dict = Depends(require_admin)):
+    project = await db.projects.find_one({"id": pid}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    files = project.get("files", [])
+    idx = next((i for i, f in enumerate(files) if f["id"] == file_id), -1)
+    if idx < 0:
+        raise HTTPException(status_code=404, detail="File not found")
+    set_doc = {}
+    if payload.display_name is not None:
+        set_doc[f"files.{idx}.display_name"] = payload.display_name.strip() or None
+    if payload.category is not None:
+        set_doc[f"files.{idx}.category"] = payload.category
+    if set_doc:
+        set_doc["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.projects.update_one({"id": pid}, {"$set": set_doc})
+    fresh = await db.projects.find_one({"id": pid}, {"_id": 0})
+    f = next((x for x in fresh.get("files", []) if x["id"] == file_id), None)
+    out = {k: v for k, v in f.items() if not k.startswith("_")}
     return _serialize(out)
 
 
@@ -491,7 +583,65 @@ async def delete_project_file(pid: str, file_id: str, _: dict = Depends(require_
     await db.projects.update_one({"id": pid}, {"$pull": {"files": {"id": file_id}}})
 
 
+# Admin OR user can toggle showcase
+@projects_router.patch("/{pid}/showcase", response_model=ProjectOut)
+async def update_showcase(pid: str, payload: ShowcaseUpdate, current=Depends(require_role("admin", "user"))):
+    project = await db.projects.find_one({"id": pid}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    upd = payload.model_dump()
+    upd["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.projects.update_one({"id": pid}, {"$set": upd})
+    doc = await db.projects.find_one({"id": pid}, {"_id": 0})
+    return _serialize(doc)
+
+
 api_router.include_router(projects_router)
+
+
+# ---------------- Public case studies ----------------
+class PublicCase(BaseModel):
+    id: str
+    showcase_industry: Optional[str] = None
+    showcase_quote: Optional[str] = None
+    showcase_author: Optional[str] = None
+    showcase_metric: Optional[str] = None
+    name: str
+
+
+@api_router.get("/cases", response_model=List[PublicCase])
+async def list_public_cases():
+    docs = await db.projects.find(
+        {"is_showcase": True},
+        {"_id": 0, "id": 1, "name": 1, "showcase_industry": 1, "showcase_quote": 1, "showcase_author": 1, "showcase_metric": 1}
+    ).sort("updated_at", -1).to_list(60)
+    return docs
+
+
+# ---------------- Self-profile (any signed-in user) ----------------
+@api_router.patch("/auth/me", response_model=UserOut)
+async def update_me(payload: SelfProfileUpdate, current=Depends(get_current_user)):
+    upd = {}
+    if payload.full_name is not None:
+        upd["full_name"] = payload.full_name
+    # Username change
+    if payload.new_username and payload.new_username.strip() != current["username"]:
+        new_u = payload.new_username.strip()
+        if await db.users.find_one({"username": new_u, "id": {"$ne": current["id"]}}):
+            raise HTTPException(status_code=409, detail="Username already taken")
+        upd["username"] = new_u
+    # Password change requires current_password verification
+    if payload.new_password:
+        if not payload.current_password:
+            raise HTTPException(status_code=400, detail="current_password required to change password")
+        existing = await db.users.find_one({"id": current["id"]})
+        if not existing or not verify_password(payload.current_password, existing.get("password_hash", "")):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
+        upd["password_hash"] = hash_password(payload.new_password)
+    if upd:
+        await db.users.update_one({"id": current["id"]}, {"$set": upd})
+    fresh = await db.users.find_one({"id": current["id"]}, {"_id": 0, "password_hash": 0})
+    return _serialize(fresh)
 
 
 # ---------------- Mount + CORS ----------------
