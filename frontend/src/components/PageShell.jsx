@@ -61,7 +61,7 @@ export const CTABlock = () => {
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-20 lg:py-24 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
         <div>
           <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-3">
-            Ready when you are
+            {t.quote.cta_overline}
           </div>
           <h3 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-white uppercase tracking-tight max-w-xl leading-tight">
             {t.quote.title}

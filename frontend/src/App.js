@@ -20,6 +20,7 @@ import {
   CareersPage,
   CertificationsPage,
   PrivacyPage,
+  NotFoundPage,
 } from "./pages/InnerPages";
 
 const Landing = () => (
@@ -58,6 +59,7 @@ function App() {
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/certifications" element={<CertificationsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
       <Toaster

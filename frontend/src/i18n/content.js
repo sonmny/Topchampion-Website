@@ -104,6 +104,7 @@ export const content = {
     },
     quote: {
       overline: "Smart quote",
+      cta_overline: "Ready when you are",
       title: "Tell us about your project.",
       sub: "A senior engineer will respond within one business day with a scoped technical proposal — not a sales pitch.",
       fields: {
@@ -259,6 +260,7 @@ export const content = {
     },
     quote: {
       overline: "智能报价",
+      cta_overline: "随时为您准备就绪",
       title: "请告诉我们您的项目。",
       sub: "我们的资深工程师将在一个工作日内回复,提供有范围的技术建议书 —— 而非销售推销。",
       fields: {
