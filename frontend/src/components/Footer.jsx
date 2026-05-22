@@ -21,10 +21,10 @@ export const Footer = () => {
               />
               <div>
                 <div className="font-heading font-bold text-white text-base tracking-tight uppercase">
-                  Topchampion Automation
+                  Topchampion Electric &amp; Automation
                 </div>
                 <div className="font-mono text-[10px] text-zinc-500 tracking-[0.2em] uppercase">
-                  苏州赛冠 · 自动化
+                  苏州赛冠 · 电气 &amp; 自动化
                 </div>
               </div>
             </div>

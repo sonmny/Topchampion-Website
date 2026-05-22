@@ -2,6 +2,7 @@
 export const content = {
   en: {
     nav: {
+      home: "Home",
       solutions: "Solutions",
       engineering: "Engineering",
       cases: "Case Studies",
@@ -156,6 +157,7 @@ export const content = {
   },
   cn: {
     nav: {
+      home: "首页",
       solutions: "解决方案",
       engineering: "工程能力",
       cases: "案例研究",

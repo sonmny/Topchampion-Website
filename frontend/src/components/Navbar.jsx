@@ -20,6 +20,7 @@ export const Navbar = () => {
   };
 
   const navLinks = [
+    { id: "top", label: t.nav.home },
     { id: "solutions", label: t.nav.solutions },
     { id: "engineering", label: t.nav.engineering },
     { id: "cases", label: t.nav.cases },
@@ -56,7 +57,7 @@ export const Navbar = () => {
               Topchampion
             </div>
             <div className="font-mono text-[10px] text-zinc-500 tracking-[0.2em] uppercase">
-              苏州赛冠 · Automation
+              苏州赛冠 · Electric &amp; Automation
             </div>
           </div>
         </a>
