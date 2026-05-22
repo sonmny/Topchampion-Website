@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLang } from "../i18n/LangContext";
 import { Menu, X } from "lucide-react";
 
@@ -6,6 +7,8 @@ export const Navbar = () => {
   const { lang, setLang, t } = useLang();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -13,18 +16,17 @@ export const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const scrollTo = (id) => {
+  const goTo = (path) => {
     setOpen(false);
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    navigate(path);
   };
 
   const navLinks = [
-    { id: "top", label: t.nav.home },
-    { id: "solutions", label: t.nav.solutions },
-    { id: "engineering", label: t.nav.engineering },
-    { id: "cases", label: t.nav.cases },
-    { id: "contact", label: t.nav.contact },
+    { id: "home", to: "/", label: t.nav.home },
+    { id: "solutions", to: "/solutions", label: t.nav.solutions },
+    { id: "engineering", to: "/engineering", label: t.nav.engineering },
+    { id: "cases", to: "/cases", label: t.nav.cases },
+    { id: "contact", to: "/contact", label: t.nav.contact },
   ];
 
   return (
@@ -39,11 +41,11 @@ export const Navbar = () => {
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 h-[72px] flex items-center justify-between">
         {/* Logo */}
         <a
-          href="#top"
+          href="/"
           data-testid="nav-logo"
           onClick={(e) => {
             e.preventDefault();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            goTo("/");
           }}
           className="flex items-center gap-3 group"
         >
@@ -64,16 +66,21 @@ export const Navbar = () => {
 
         {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-10">
-          {navLinks.map((l) => (
-            <button
-              key={l.id}
-              data-testid={`nav-link-${l.id}`}
-              onClick={() => scrollTo(l.id)}
-              className="text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-200 tracking-wide"
-            >
-              {l.label}
-            </button>
-          ))}
+          {navLinks.map((l) => {
+            const active = location.pathname === l.to;
+            return (
+              <Link
+                key={l.id}
+                to={l.to}
+                data-testid={`nav-link-${l.id}`}
+                className={`text-sm font-medium transition-colors duration-200 tracking-wide ${
+                  active ? "text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right side */}
@@ -104,7 +111,7 @@ export const Navbar = () => {
 
           <button
             data-testid="nav-cta-quote"
-            onClick={() => scrollTo("contact")}
+            onClick={() => goTo("/contact")}
             className="hidden md:inline-flex items-center gap-2 bg-[#C9A063] hover:bg-[#B58D4F] text-black font-semibold tracking-wide uppercase text-xs px-5 h-9 transition-colors"
           >
             {t.nav.quote}
@@ -129,7 +136,7 @@ export const Navbar = () => {
               <button
                 key={l.id}
                 data-testid={`mobile-nav-${l.id}`}
-                onClick={() => scrollTo(l.id)}
+                onClick={() => goTo(l.to)}
                 className="text-left text-zinc-300 hover:text-white py-2 border-b border-white/5"
               >
                 {l.label}
@@ -158,7 +165,7 @@ export const Navbar = () => {
               </button>
             </div>
             <button
-              onClick={() => scrollTo("contact")}
+              onClick={() => goTo("/contact")}
               className="mt-4 bg-[#C9A063] text-black font-semibold py-3 uppercase text-sm tracking-wide"
               data-testid="mobile-cta-quote"
             >

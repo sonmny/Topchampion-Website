@@ -1,9 +1,36 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useLang } from "../i18n/LangContext";
 import { Linkedin, Twitter, Youtube, Github, MapPin, Mail, Phone } from "lucide-react";
 
 export const Footer = () => {
   const { t } = useLang();
+
+  const solutionLinks = [
+    { label: t.footer.links.solutions[0], to: "/solutions/tire-production" },
+    { label: t.footer.links.solutions[1], to: "/solutions/control-cabinets" },
+    { label: t.footer.links.solutions[2], to: "/solutions/bess" },
+    { label: t.footer.links.solutions[3], to: "/solutions/data-center" },
+  ];
+  const companyLinks = [
+    { label: t.footer.links.company[0], to: "/about" },
+    { label: t.footer.links.company[1], to: "/engineering" },
+    { label: t.footer.links.company[2], to: "/careers" },
+    { label: t.footer.links.company[3], to: "/contact" },
+  ];
+  const legalLinks = [
+    { label: t.footer.links.legal[0], to: "/certifications" },
+    { label: t.footer.links.legal[1], to: "/certifications" },
+    { label: t.footer.links.legal[2], to: "/certifications" },
+    { label: t.footer.links.legal[3], to: "/certifications" },
+    { label: t.footer.links.legal[4], to: "/privacy" },
+  ];
+  const columns = [
+    { title: t.footer.sections.solutions, items: solutionLinks },
+    { title: t.footer.sections.company, items: companyLinks },
+    { title: t.footer.sections.legal, items: legalLinks },
+  ];
+
   return (
     <footer
       data-testid="site-footer"
@@ -49,29 +76,21 @@ export const Footer = () => {
           </div>
 
           {/* Link columns */}
-          {[
-            { title: t.footer.sections.solutions, items: t.footer.links.solutions },
-            { title: t.footer.sections.company, items: t.footer.links.company },
-            { title: t.footer.sections.legal, items: t.footer.links.legal },
-          ].map((col, i) => (
-            <div
-              key={i}
-              className="lg:col-span-2 lg:col-start-auto"
-              data-testid={`footer-col-${i}`}
-            >
+          {columns.map((col, i) => (
+            <div key={i} className="lg:col-span-2" data-testid={`footer-col-${i}`}>
               <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-5">
                 {col.title}
               </div>
               <ul className="flex flex-col gap-3">
                 {col.items.map((l, j) => (
                   <li key={j}>
-                    <a
-                      href="#"
-                      onClick={(e) => e.preventDefault()}
+                    <Link
+                      to={l.to}
+                      data-testid={`footer-link-${i}-${j}`}
                       className="text-sm text-zinc-400 hover:text-white transition-colors"
                     >
-                      {l}
-                    </a>
+                      {l.label}
+                    </Link>
                   </li>
                 ))}
               </ul>

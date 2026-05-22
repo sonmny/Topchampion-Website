@@ -1,0 +1,41 @@
+{
+  "summary": "Multi-page routing validation for Topchampion site. Tested all 13 routes, navbar/footer routing, hero CTAs, solutions hub + 4 detail pages, certifications grid, language toggle persistence across routes, and the /contact lead submission flow. 47/47 frontend checks pass.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Solutions /solutions/data-center hero", "issues": ["Both /solutions/bess and /solutions/data-center use the same Pexels photo (photos/17489160) in the IMG map of SolutionsPages.jsx. Detail hero is text-only so not visible there, but the Solutions hub cards (/solutions) show two identical images side-by-side for BESS and Data Center, which weakens visual differentiation."]},
+      {"screen": "Footer Legal column (CN+EN)", "issues": ["Items 0–3 (ISO 9001:2015, IEC 61439, UL 891 / 508A, CE Marking) ALL route to the same /certifications page; only the last item (Privacy Policy) routes to /privacy. As implemented this matches the spec, but every cert link landing on the same page (with no anchor / fragment) is a UX smell — consider deep-linking to a cert-id within the page (#cert-iso9001 etc.) so the navigation feels intentional."]},
+      {"screen": "Inner pages CTABlock", "issues": ["The CTABlock 'Ready when you are' overline label is hard-coded English in PageShell.jsx (line 64) and is NOT swapped via i18n — when language is set to CN, this string remains 'Ready when you are' while the title and button label correctly switch to Chinese."]},
+      {"screen": "Solution detail sidebar CTA", "issues": ["data-testid=detail-cta button label 'Request a Smart Quote →' is hard-coded English in SolutionsPages.jsx line 103 — does not translate to CN."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_leads.py"
+  ],
+  "action_items": [
+    "(Polish) Differentiate the BESS vs Data Center thumbnails in IMG map of /app/frontend/src/pages/SolutionsPages.jsx — currently identical Pexels URL.",
+    "(i18n gap) Localize the 'Ready when you are' overline in /app/frontend/src/components/PageShell.jsx CTABlock — use t.cta_overline or similar; currently always English.",
+    "(i18n gap) Localize the 'Request a Smart Quote →' label inside detail-cta in /app/frontend/src/pages/SolutionsPages.jsx — reuse t.nav.quote like the navbar does.",
+    "(UX) Consider deep-linking the four /certifications footer items to specific cert IDs (#cert-0..#cert-3) instead of bare /certifications for all four."
+  ],
+  "critical_code_review_comments": [
+    "PageShell auto-scrolls with behavior:'instant' on every mount which is a non-standard ScrollBehavior value (spec uses 'auto'); modern browsers tolerate it but Safari may warn.",
+    "SolutionDetail returns null when slug is unknown (e.g. /solutions/foo) — there is no 404 page or redirect, just a blank inner-page-root with no PageShell. Recommend rendering a NotFound component or redirecting to /solutions.",
+    "App.js does not register a catch-all '*' route — typing any non-listed path (e.g. /xyz) renders nothing (blank page), no 404 UX.",
+    "LangContext appears to be in-memory only (not verified persisting to localStorage in this run); since LangProvider wraps BrowserRouter, language correctly survives client-side route changes, but a full page reload would reset to default. Worth confirming whether persistence is desired.",
+    "CTABlock English overline and detail-cta English label are not wired through i18n — see action items above."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not retested (no backend changes in this iteration)", "frontend": "100% (47/47 checks)"},
+  "test_credentials": "N/A — no auth in this app",
+  "seed_data_creation": "Created one TEST_-prefixed lead (TEST_Iter2 Tester / test_iter2@example.com) via /contact form submission during routing test.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 13 routes load. Navbar uses data-testid='nav-link-{home|solutions|engineering|cases|contact}' and 'nav-cta-quote'. Hero CTAs use 'hero-cta-primary' (→/contact) and 'hero-cta-secondary' (→/solutions). Solutions hub cards use 'hub-card-{tire-production|control-cabinets|bess|data-center}'. Detail pages expose 'detail-cta'. CTABlock at bottom of inner pages uses 'cta-block-link'. Certifications page exposes 'cert-0'..'cert-4'. Footer link testids follow 'footer-link-{col}-{row}'. Contact form testids are 'form-name','form-company','form-email','form-phone','form-industry','form-plc','form-description','form-submit','quote-success' (NOT 'quote-name' / 'quote-submit' — iter1 report had stale names). Language toggle 'lang-en'/'lang-cn' correctly switches all inner page content and survives client-side navigation.",
+  "rca of the issue": "No bugs blocking routing. Minor i18n gaps in PageShell.CTABlock overline and SolutionDetail.detail-cta button label (both hard-coded English) and a duplicated Pexels image between BESS and Data Center cards on the Solutions hub."
+}

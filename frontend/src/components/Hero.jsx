@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useLang } from "../i18n/LangContext";
 import { ArrowRight, ChevronDown } from "lucide-react";
 
@@ -105,21 +106,21 @@ export const Hero = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-10 flex flex-wrap gap-3"
           >
-            <button
+            <Link
+              to="/contact"
               data-testid="hero-cta-primary"
-              onClick={() => scrollTo("contact")}
               className="group inline-flex items-center gap-3 bg-[#0F6B3F] hover:bg-[#0A5230] text-white font-semibold tracking-wide uppercase text-sm px-7 h-14 transition-colors"
             >
               {t.hero.cta_primary}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button
+            </Link>
+            <Link
+              to="/solutions"
               data-testid="hero-cta-secondary"
-              onClick={() => scrollTo("solutions")}
               className="inline-flex items-center gap-3 border border-white/15 hover:border-[#C9A063] hover:text-[#C9A063] text-white font-semibold tracking-wide uppercase text-sm px-7 h-14 transition-colors bg-white/[0.02]"
             >
               {t.hero.cta_secondary}
-            </button>
+            </Link>
           </motion.div>
 
           {/* Quick credibility row */}
