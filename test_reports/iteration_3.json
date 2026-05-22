@@ -1,0 +1,38 @@
+{
+  "summary": "Full backend + frontend verification of Topchampion JWT admin console (iteration 3). Backend: 24/24 pytest cases passed (auth, role gates, project CRUD, file upload+delete, public lead). Frontend: CN default landing verified, full admin login -> dashboard -> create project -> detail -> edit route -> users CRUD -> role gating -> logout -> protection flow all PASS. No critical issues found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/projects/{id} PATCH", "issue": "PATCH uses the strict ProjectIn model so all fields without defaults (name) are required; sending a partial like {status:'archived'} returns 422. Not a bug per spec, but a true partial-update PATCH would normally use Optional fields. Frontend currently always sends full payload so it works in practice."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin dashboard / role badge", "issues": ["Role value shown for the seeded admin is rendered as 'SYSTEM ADMINISTRATOR' all-caps in the welcome line and as the localized role badge — visually consistent but ensure the 'EN' toggle label vs current language label is unambiguous (it shows EN when CN is active, which is the standard pattern, kept as-is)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_api.py",
+    "/app/backend/tests/test_leads.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py PATCH /api/projects/{id} uses ProjectIn (name required). If true partial updates are desired later, introduce a ProjectUpdate model with all-Optional fields.",
+    "server.py uses deprecated FastAPI @app.on_event('startup'/'shutdown'). Consider migrating to lifespan context — runtime works but emits DeprecationWarning.",
+    "Admin password is read from .env on every startup and rewrites bcrypt hash if it doesn't match — fine for this app, but document that rotating ADMIN_PASSWORD in .env will silently change the admin password on the next restart.",
+    "CORS_ORIGINS='*' with allow_credentials=False is correct for the Bearer flow used here; do NOT enable credentials without restricting origins."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_api.py (new)"
+  ],
+  "success_rate": {"backend": "100% (24/24)", "frontend": "100% on retested flows"},
+  "test_credentials": "admin / Topchampion (seeded)",
+  "seed_data_creation": "Tests create TEST_* users and TEST_* projects and clean them up at the end via the zz_cleanup test and a manual cleanup pass. No leftover seed data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression file is /app/backend/tests/test_admin_api.py (24 cases, pytest). Run with: pytest /app/backend/tests/ -v --junitxml=/app/test_reports/pytest/pytest_results.xml. The admin auto-seeds with ADMIN_USERNAME/ADMIN_PASSWORD from /app/backend/.env on every startup (idempotent — rewrites hash if .env password changes). Project/User selects in the admin UI are native <select> elements, so Playwright must use page.select_option(value=...) — clicking option text fails because native <option> isn't a normal clickable. Default language is CN; sidebar lang toggle (data-testid=admin-lang-toggle) flips CN<->EN.",
+  "rca of the issue": "No bugs to RCA. Initial Playwright run had script-side issues using locator.click on native <option> elements (which Chromium doesn't dispatch as user clicks); resolved by switching to page.select_option(value=...). All re-tested flows passed."
+}
