@@ -14,7 +14,7 @@ import bcrypt
 import jwt
 import base64
 import io
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File, Form
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -25,6 +25,8 @@ try:
     PIL_AVAILABLE = True
 except Exception:
     PIL_AVAILABLE = False
+
+from notifications import send_new_lead_email
 
 
 # ---------------- Config ----------------
@@ -320,6 +322,7 @@ ALLOWED_LEAD_FILE_EXT = {".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".doc
 
 @api_router.post("/leads", response_model=Lead, status_code=201)
 async def create_lead(
+    background_tasks: BackgroundTasks,
     name: str = Form(...),
     company: str = Form(...),
     industry: str = Form(...),
@@ -371,6 +374,8 @@ async def create_lead(
     out = dict(doc)
     if out.get("file_meta"):
         out["file_meta"] = {k: v for k, v in out["file_meta"].items() if not k.startswith("_")}
+    # Fire-and-forget sales-notification email (non-blocking, never raises)
+    background_tasks.add_task(send_new_lead_email, out)
     return _serialize(out)
 
 

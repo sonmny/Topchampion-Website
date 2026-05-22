@@ -58,6 +58,25 @@ const ContentPage = ({ pageKey }) => {
     <PageShell>
       <SEO pageKey={seoKey} path={path} />
       <PageHero breadcrumb={p.breadcrumb} title={p.title} subtitle={p.subtitle} />
+      {pageKey === "about" && (
+        <section className="bg-[#0A0A0A] pb-12" data-testid="about-hero-image">
+          <div className="max-w-[1200px] mx-auto px-6 md:px-12">
+            <div className="aspect-[16/7] bg-white/5 overflow-hidden border border-white/10">
+              <img
+                src="/assets/products/control-cabinet-mcc.jpg"
+                alt="Topchampion manufactured low-voltage MCC cabinet"
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-zinc-500 mt-3">
+              {lang === "cn"
+                ? "昆山赛冠车间 · 出货中的低压电机控制中心(MCC)柜体"
+                : "Kunshan Topchampion Factory · LV Motor Control Center (MCC) shipping line"}
+            </p>
+          </div>
+        </section>
+      )}
       <section className="bg-[#0A0A0A] py-20 lg:py-24">
         <div className="max-w-[900px] mx-auto px-6 md:px-12 flex flex-col gap-12">
           {p.sections.map((s, i) => (
@@ -131,10 +150,78 @@ export const PrivacyPage = () => <ContentPage pageKey="privacy" />;
 export const CertificationsPage = () => {
   const { lang } = useLang();
   const p = P[lang].certifications;
+  const [zoomed, setZoomed] = React.useState(null);
+  const certImg = lang === "cn" ? "/assets/certs/iso9001-cn.jpg" : "/assets/certs/iso9001-en.jpg";
   return (
     <PageShell>
       <SEO pageKey="certifications" path="/certifications" />
       <PageHero breadcrumb={p.breadcrumb} title={p.title} subtitle={p.subtitle} />
+
+      {/* Real cert thumbnails */}
+      <section className="bg-[#070707] py-16 lg:py-20 border-t border-white/5" data-testid="certs-gallery">
+        <div className="max-w-[1100px] mx-auto px-6 md:px-12">
+          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-8">
+            {lang === "cn" ? "证书原件" : "Certificate originals"}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/10 border border-white/10">
+            <button
+              onClick={() => setZoomed(certImg)}
+              data-testid="cert-img-iso"
+              className="bg-[#0A0A0A] p-6 flex flex-col gap-4 hover:bg-[#101010] transition-colors text-left group"
+            >
+              <div className="aspect-[1/1.4] bg-white/5 overflow-hidden">
+                <img
+                  src={certImg}
+                  alt="ISO 9001 Certificate"
+                  loading="lazy"
+                  className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-500"
+                />
+              </div>
+              <div>
+                <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] mb-1">ISO 9001:2015</div>
+                <div className="text-sm text-zinc-300">
+                  {lang === "cn" ? "质量管理体系认证 · CQC 签发" : "Quality Management System · CQC"}
+                </div>
+              </div>
+            </button>
+            <div className="bg-[#0A0A0A] p-6 flex flex-col gap-4">
+              <div className="aspect-[1/1.4] bg-gradient-to-br from-[#0F6B3F]/15 to-[#0A0A0A] border border-[#0F6B3F]/20 flex flex-col items-center justify-center gap-4 text-center p-6">
+                <div className="font-heading text-3xl lg:text-4xl font-bold text-[#C9A063] tracking-tight">
+                  GR202432006352
+                </div>
+                <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-zinc-400">
+                  {lang === "cn" ? "证书编号" : "Certificate No."}
+                </div>
+                <div className="text-xs text-zinc-400 leading-relaxed max-w-[260px]">
+                  {lang === "cn"
+                    ? "江苏省科学技术厅、财政厅、税务局共同认定 · 2024 年 11 月 19 日颁发 · 有效期三年"
+                    : "Jointly issued by Jiangsu Provincial Department of Science & Technology, Finance, and Taxation · Nov 19, 2024 · valid 3 years"}
+                </div>
+              </div>
+              <div>
+                <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] mb-1">
+                  {lang === "cn" ? "国家高新技术企业" : "National High-Tech Enterprise"}
+                </div>
+                <div className="text-sm text-zinc-300">
+                  {lang === "cn" ? "2024 年获颁 · 苏州赛冠工业自动化技术有限公司" : "Awarded 2024 · Suzhou Topchampion Industrial Automation Technology Co., Ltd."}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Zoom overlay */}
+      {zoomed && (
+        <div
+          onClick={() => setZoomed(null)}
+          data-testid="cert-zoom-overlay"
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 lg:p-12 cursor-zoom-out"
+        >
+          <img src={zoomed} alt="Certificate" className="max-w-full max-h-full object-contain shadow-2xl" />
+        </div>
+      )}
+
       <section className="bg-[#0A0A0A] py-20 lg:py-24">
         <div className="max-w-[1100px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10">
           {p.items.map((it, i) => (
