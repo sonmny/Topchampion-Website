@@ -44,7 +44,7 @@ export const Navbar = () => {
           : "bg-transparent border-b border-transparent"
       }`}
     >
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 h-[72px] flex items-center justify-between">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 h-[72px] lg:h-[88px] flex items-center justify-between">
         {/* Logo */}
         <a
           href="/"
@@ -58,20 +58,20 @@ export const Navbar = () => {
           <img
             src="/logo.png"
             alt="Topchampion logo"
-            className="w-11 h-11 object-contain"
+            className="w-11 h-11 lg:w-[52px] lg:h-[52px] object-contain"
           />
           <div className="leading-tight">
-            <div className="font-heading font-bold text-white text-[13px] tracking-tight uppercase whitespace-nowrap">
+            <div className="font-heading font-bold text-white text-[13px] xl:text-[15px] tracking-tight uppercase whitespace-nowrap">
               Topchampion Electric &amp; Automation
             </div>
-            <div className="font-mono text-[10px] text-zinc-500 tracking-[0.18em] uppercase whitespace-nowrap">
+            <div className="font-mono text-[10px] xl:text-[11px] text-zinc-500 tracking-[0.18em] uppercase whitespace-nowrap">
               苏州赛冠 电气 &amp; 自动化
             </div>
           </div>
         </a>
 
         {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-10">
+        <nav className="hidden lg:flex items-center gap-2 xl:gap-4">
           {navLinks.map((l) => {
             const active = location.pathname === l.to;
             return (
@@ -79,7 +79,7 @@ export const Navbar = () => {
                 key={l.id}
                 to={l.to}
                 data-testid={`nav-link-${l.id}`}
-                className={`text-sm font-medium transition-colors duration-200 tracking-wide ${
+                className={`text-sm font-medium transition-colors duration-200 tracking-wide text-center px-3 min-w-[110px] xl:min-w-[130px] whitespace-nowrap ${
                   active ? "text-white" : "text-zinc-400 hover:text-white"
                 }`}
               >
@@ -93,12 +93,12 @@ export const Navbar = () => {
         <div className="flex items-center gap-3">
           <div
             data-testid="lang-toggle"
-            className="hidden sm:flex items-center h-9 border border-white/10 bg-black/30"
+            className="hidden sm:flex items-center h-9 lg:h-10 border border-white/10 bg-black/30"
           >
             <button
               data-testid="lang-en"
               onClick={() => setLang("en")}
-              className={`px-3 h-full font-mono text-[11px] tracking-wider transition-colors ${
+              className={`h-full w-11 flex items-center justify-center font-mono text-[11px] tracking-wider transition-colors ${
                 lang === "en" ? "bg-[#0F6B3F] text-white" : "text-zinc-400 hover:text-white"
               }`}
             >
@@ -107,7 +107,7 @@ export const Navbar = () => {
             <button
               data-testid="lang-cn"
               onClick={() => setLang("cn")}
-              className={`px-3 h-full font-mono text-[11px] tracking-wider transition-colors ${
+              className={`h-full w-11 flex items-center justify-center font-mono text-[11px] tracking-wider transition-colors ${
                 lang === "cn" ? "bg-[#0F6B3F] text-white" : "text-zinc-400 hover:text-white"
               }`}
             >
@@ -118,7 +118,7 @@ export const Navbar = () => {
           <button
             data-testid="nav-cta-quote"
             onClick={() => goTo("/contact")}
-            className="hidden md:inline-flex items-center gap-2 bg-[#C9A063] hover:bg-[#B58D4F] text-black font-semibold tracking-wide uppercase text-xs px-5 h-9 transition-colors"
+            className="hidden md:inline-flex items-center justify-center gap-2 bg-[#C9A063] hover:bg-[#B58D4F] text-black font-semibold tracking-wide uppercase text-xs lg:text-[12px] px-4 h-9 lg:h-10 min-w-[170px] lg:min-w-[210px] whitespace-nowrap transition-colors"
           >
             {t.nav.quote}
           </button>
@@ -126,7 +126,7 @@ export const Navbar = () => {
           <button
             data-testid="nav-cta-login"
             onClick={() => goTo(loginTarget)}
-            className={`hidden md:inline-flex items-center gap-2 border font-semibold tracking-wide uppercase text-xs px-5 h-9 transition-colors ${
+            className={`hidden md:inline-flex items-center justify-center gap-2 border font-semibold tracking-wide uppercase text-xs lg:text-[12px] px-4 h-9 lg:h-10 min-w-[120px] lg:min-w-[145px] whitespace-nowrap transition-colors ${
               isSignedIn
                 ? "bg-[#0F6B3F] border-[#0F6B3F] text-white hover:bg-[#0A5230]"
                 : "border-white/15 text-zinc-300 hover:border-[#0F6B3F] hover:text-white hover:bg-[#0F6B3F]"

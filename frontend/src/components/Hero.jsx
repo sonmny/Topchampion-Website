@@ -59,7 +59,7 @@ export const Hero = () => {
       />
 
       {/* Content */}
-      <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 pt-40 pb-20 lg:pt-48 lg:pb-32">
+      <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 pt-40 pb-20 lg:pt-52 lg:pb-32">
         <div className="max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 12 }}

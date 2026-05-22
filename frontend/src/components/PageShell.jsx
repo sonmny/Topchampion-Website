@@ -13,7 +13,7 @@ export const PageShell = ({ children }) => {
   return (
     <div className="App relative bg-[#0A0A0A] text-white min-h-screen" data-testid="inner-page-root">
       <Navbar />
-      <main className="pt-[72px]">{children}</main>
+      <main className="pt-[72px] lg:pt-[88px]">{children}</main>
       <Footer />
     </div>
   );
