@@ -9,6 +9,7 @@ export const content = {
       contact: "Contact",
       quote: "Request a Smart Quote",
       login: "Sign in",
+      enter_admin: "Admin Console",
     },
     hero: {
       overline: "Suzhou Topchampion Automation · 苏州赛冠",
@@ -166,6 +167,7 @@ export const content = {
       contact: "联系我们",
       quote: "获取智能报价",
       login: "登录",
+      enter_admin: "进入后台",
     },
     hero: {
       overline: "苏州赛冠自动化 · Suzhou Topchampion",

@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLang } from "../i18n/LangContext";
-import { Menu, X, LogIn } from "lucide-react";
+import { useAuth } from "../admin/AuthContext";
+import { Menu, X, LogIn, LayoutDashboard } from "lucide-react";
 
 export const Navbar = () => {
   const { lang, setLang, t } = useLang();
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const isSignedIn = !!user;
+  const loginTarget = isSignedIn ? "/admin" : "/admin/login";
+  const loginLabel = isSignedIn ? t.nav.enter_admin : t.nav.login;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -119,11 +125,15 @@ export const Navbar = () => {
 
           <button
             data-testid="nav-cta-login"
-            onClick={() => goTo("/admin/login")}
-            className="hidden md:inline-flex items-center gap-2 border border-white/15 hover:border-[#0F6B3F] hover:text-white hover:bg-[#0F6B3F] text-zinc-300 font-semibold tracking-wide uppercase text-xs px-5 h-9 transition-colors"
+            onClick={() => goTo(loginTarget)}
+            className={`hidden md:inline-flex items-center gap-2 border font-semibold tracking-wide uppercase text-xs px-5 h-9 transition-colors ${
+              isSignedIn
+                ? "bg-[#0F6B3F] border-[#0F6B3F] text-white hover:bg-[#0A5230]"
+                : "border-white/15 text-zinc-300 hover:border-[#0F6B3F] hover:text-white hover:bg-[#0F6B3F]"
+            }`}
           >
-            <LogIn size={13} />
-            {t.nav.login}
+            {isSignedIn ? <LayoutDashboard size={13} /> : <LogIn size={13} />}
+            {loginLabel}
           </button>
 
           <button
@@ -181,12 +191,12 @@ export const Navbar = () => {
               {t.nav.quote}
             </button>
             <button
-              onClick={() => goTo("/admin/login")}
+              onClick={() => goTo(loginTarget)}
               className="bg-[#0F6B3F] text-white font-semibold py-3 uppercase text-sm tracking-wide flex items-center justify-center gap-2"
               data-testid="mobile-cta-login"
             >
-              <LogIn size={14} />
-              {t.nav.login}
+              {isSignedIn ? <LayoutDashboard size={14} /> : <LogIn size={14} />}
+              {loginLabel}
             </button>
           </div>
         </div>
