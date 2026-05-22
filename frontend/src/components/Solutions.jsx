@@ -19,7 +19,9 @@ export const Solutions = () => {
   const updateArrows = () => {
     const el = trackRef.current;
     if (!el) return;
-    setCanPrev(el.scrollLeft > 8);
+    // Inner track has horizontal padding (px-6 md:px-12) so initial scrollLeft is > 0.
+    // Use a generous threshold so prev is properly disabled at start.
+    setCanPrev(el.scrollLeft > 64);
     setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
   };
 

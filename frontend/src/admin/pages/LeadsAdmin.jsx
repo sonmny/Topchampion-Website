@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+// (LeadsList rows are clickable as a UX improvement; see onClick on <tr> below.)
 import { AdminLayout } from "../AdminLayout";
 import { api, formatApiError } from "../apiClient";
 import { useLang } from "../../i18n/LangContext";
@@ -23,6 +24,7 @@ const countryLabel = (code, lang) => {
 export const LeadsList = () => {
   const { lang } = useLang();
   const t = adminI18n[lang];
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,7 +72,7 @@ export const LeadsList = () => {
               </thead>
               <tbody>
                 {items.map((l) => (
-                  <tr key={l.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors" data-testid={`lead-row-${l.id}`}>
+                  <tr key={l.id} onClick={() => navigate(`/admin/leads/${l.id}`)} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer" data-testid={`lead-row-${l.id}`}>
                     <td className="px-5 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-mono tracking-wider uppercase border ${STATUS_CLR[l.status] || STATUS_CLR.new}`}>
                         {l.status === "new" && <span className="w-1.5 h-1.5 rounded-full bg-[#1A8A52] pulse-dot" />}
@@ -78,7 +80,7 @@ export const LeadsList = () => {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-white font-medium">
-                      <Link to={`/admin/leads/${l.id}`} className="hover:text-[#C9A063] transition-colors">
+                      <Link to={`/admin/leads/${l.id}`} onClick={(e) => e.stopPropagation()} className="hover:text-[#C9A063] transition-colors">
                         {l.name}
                       </Link>
                       {l.file_meta && <Paperclip size={11} className="inline ml-2 text-[#C9A063]" />}
@@ -88,7 +90,7 @@ export const LeadsList = () => {
                     <td className="px-5 py-4 text-zinc-300">{t.leads.industries[l.industry] || l.industry}</td>
                     <td className="px-5 py-4 text-zinc-400 font-mono text-xs">{new Date(l.created_at).toLocaleString()}</td>
                     <td className="px-5 py-4 text-right">
-                      <Link to={`/admin/leads/${l.id}`} data-testid={`lead-view-${l.id}`} className="inline-flex items-center justify-center w-9 h-9 border border-white/10 text-zinc-400 hover:text-[#C9A063] hover:border-[#C9A063] transition-colors">
+                      <Link to={`/admin/leads/${l.id}`} onClick={(e) => e.stopPropagation()} data-testid={`lead-view-${l.id}`} className="inline-flex items-center justify-center w-9 h-9 border border-white/10 text-zinc-400 hover:text-[#C9A063] hover:border-[#C9A063] transition-colors">
                         <ChevronRight size={14} />
                       </Link>
                     </td>

@@ -47,12 +47,23 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
 - Admin pages at `/admin`: Login, Dashboard, Projects list/detail/form, Users (admin-only)
 - 24/24 backend + frontend admin tests pass (iteration_3)
 
+## Phase 4 (2026-02) — 9-Point UX Update
+- Navbar: 2-line brand block (CN+EN), Contact link removed, hover/login states refined
+- Solutions: horizontal scroll w/ snap, prev/next arrows + edge-fade gradients
+- Smart Quote: added Country/Region dropdown (`/app/frontend/src/i18n/countries.js`) and optional file upload (≤25MB, PDF/IMG/DOC/XLS/DWG/ZIP). Backend POST `/api/leads` migrated to multipart/form-data
+- Backend Leads: `Lead.country`, `Lead.file_meta`; admin-only GET/PATCH; new GET `/api/leads/{id}/file` for download
+- Admin Leads page: country column, paperclip indicator, clickable rows, file download in detail
+- Admin Users: Department field (sales/design/engineering/finance/it) + Permissions checkboxes (`view_leads`, `edit_projects`, `delete_projects`, `manage_files`) for role=user; permission-gated GET `/api/leads`
+- Footer: certifications updated
+- Tests: 17/17 backend (test_iteration5.py) · 12/13 frontend (iteration_5.json), 2 minor UX nits fixed in main agent pass
+
 ## Backlog (Future)
 - **P1**: Email notification to sales on new lead (Resend/SendGrid)
+- **P1**: SEO — per-route `<title>`/meta via react-helmet-async + JSON-LD Organization + sitemap.xml
 - **P2**: Replace text partner badges with actual ABB/Rittal/Rockwell logos when supplied
 - **P2**: True PATCH semantics on `/api/projects/{id}` (all-Optional `ProjectUpdate` model)
 - **P2**: Migrate FastAPI `on_event` startup/shutdown to lifespan context
 - **P2**: Customer-portal landing dashboard (currently customer lands on the same admin dashboard)
 - **P3**: Add CMS-driven case studies / news block
-- **P3**: Add EN/CN URL routing (`/en`, `/zh`) for SEO
+- **P3**: Add EN/CN URL routing (`/en`, `/zh`) for SEO + hreflang tags
 - **P3**: Pagination cursor on `/api/leads` and `/api/projects`
