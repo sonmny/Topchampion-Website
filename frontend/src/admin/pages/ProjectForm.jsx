@@ -144,9 +144,10 @@ export const ProjectForm = ({ mode }) => {
           <Field label={t.project_form.f_customer}>
             <select data-testid="pf-customer" value={form.customer_user_id} onChange={(e) => update("customer_user_id", e.target.value)} className="industrial-input appearance-none">
               <option value="">{t.project_form.f_customer_none}</option>
-              {customers.map((u) => (
-                <option key={u.id} value={u.id}>{u.full_name || u.username} (@{u.username})</option>
-              ))}
+              {customers.map((u) => {
+                const label = u.full_name ? `${u.full_name} (@${u.username})` : `@${u.username}`;
+                return <option key={u.id} value={u.id}>{label}</option>;
+              })}
             </select>
           </Field>
 
