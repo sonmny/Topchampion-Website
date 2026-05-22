@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 5 (9-point feature update) verified. Backend: 17/17 new pytest cases pass (test_iteration5.py) covering POST /api/leads multipart with country+file, admin-protected GET/PATCH/file endpoints, user CRUD with department + permissions, and permission-gated GET /api/leads (view_leads). Frontend public flow: 100% pass — 2-line logo, no Contact link, all 4 nav links + nav-cta-quote/nav-cta-login, Solutions horizontal scroll with prev/next + 4 cards, Smart Quote form with country dropdown + file upload, submit disabled until country, multipart POST creates lead and shows quote-success. Frontend admin: leads-list-root with country column header (国家/地区), 13 lead rows, 2 paperclip indicators, new-user dialog with all uf-* fields and uf-perm-* checkboxes. Two minor spec mismatches found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "UsersList UserDialog Save button", "issue": "Spec calls for data-testid='uf-save' but actual button uses data-testid='uf-submit'. Functionally works (clicking it creates the user). Either update spec or rename testid.", "selector": "button[type='submit'] in user dialog", "priority": "LOW"},
+      {"component": "Solutions section solutions-prev", "issue": "Spec says prev should be disabled at scrollLeft=0; observed scrollLeft=48 on initial load and prev.is_disabled()=False. Minor — probably because container has horizontal padding so initial scrollLeft is non-zero. Consider checking against a small threshold (e.g., scrollLeft <= 8) before enabling prev.", "selector": "[data-testid='solutions-prev']", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Admin LeadsList row click → detail", "issue": "Clicking the row body (tr) does not navigate; only the lead name <Link> and the chevron lead-view-{id} <Link> trigger navigation to /admin/leads/{id}. Spec wording 'Clicking a row goes to lead-detail-root' is therefore not strictly satisfied. Code path for lead-detail-root + lead-mark-viewed/closed/lead-download exists at /admin/leads/:id (LeadsAdmin.jsx line 167+) and should render correctly when navigated to. Recommend adding onClick={() => navigate(`/admin/leads/${l.id}`)} on <tr> to match spec, or update spec to 'click name/view button'.", "affected_selectors": ["[data-testid^='lead-row-']", "[data-testid='lead-detail-root']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration5.py",
+    "/app/test_reports/pytest/iteration_5_results.xml"
+  ],
+  "action_items": [
+    "Decide: rename data-testid 'uf-submit' → 'uf-save' on UsersList UserDialog save button (UsersList.jsx line 255) OR update review-spec testid name.",
+    "Optional UX: make lead row body clickable (wrap <tr> with navigate to detail) so the row click matches the spec wording, or update spec.",
+    "Optional UX: solutions-prev should be disabled when scrollLeft is at start (use a small threshold to handle padding/inset)."
+  ],
+  "critical_code_review_comments": [
+    "server.py POST /api/leads correctly strips internal _ext from response and admin GET responses; verified no leak.",
+    "server.py require_perm allows admin OR users with perm — implemented correctly, confirmed by tests (user with view_leads → 200, without → 403).",
+    "create_user / update_user filter permissions against PERMISSION_SET — confirmed invalid perms are dropped silently; invalid department is rejected with 422 (Pydantic Literal). Good defensive coding.",
+    "PATCH /api/leads/{id} uses Form(...) for status — matches frontend admin which sends FormData. Consider documenting that this endpoint is multipart-only (POSTing JSON {status: 'closed'} would 422).",
+    "FileResponse for /api/leads/{id}/file streams file with original content_type and filename — verified PDF download works."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration5.py (new — 17 cases, all pass; auto-cleanup of TEST_R5_* users)"
+  ],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "~92% (12/13 spec checks; 2 minor gaps: row-click-nav and uf-save naming)"},
+  "test_credentials": "admin / Topchampion (seeded)",
+  "seed_data_creation": "test_iteration5.py creates a few TEST_R5_* leads (3-4) and 3 TEST_R5_* users; users are deleted in teardown. Leads have no DELETE endpoint by design so they remain (tagged TEST_R5_ prefix for easy identification).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run: pytest /app/backend/tests/test_iteration5.py /app/backend/tests/test_iteration4.py /app/backend/tests/test_admin_api.py -v. test_leads.py legacy tests (iter 1) still expect public GET /api/leads — those 2 cases are outdated and not regressions. Admin login: admin/Topchampion. Frontend admin login button is the third <button> on the page (the first two are EN/CN lang toggles); use button[type='submit'] selector or query the green big button. Smart Quote form is on /contact and at the bottom of homepage (#contact). Solutions horizontal scroll uses solutions-track scrollLeft (initial value ~48 due to padding, not 0).",
+  "rca_of_the_issue": "No blocking bugs. Two cosmetic/spec-mismatch findings: (a) save button on user dialog uses uf-submit not uf-save, (b) lead row body itself isn't a clickable navigation target — only the inner Link cells navigate."
+}
