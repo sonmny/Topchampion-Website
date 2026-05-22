@@ -77,6 +77,7 @@ export const UsersList = () => {
                   <th className="px-5 py-3">{t.users.th.username}</th>
                   <th className="px-5 py-3">{t.users.th.full_name}</th>
                   <th className="px-5 py-3">{t.users.th.role}</th>
+                  <th className="px-5 py-3">{lang === "cn" ? "部门" : "Department"}</th>
                   <th className="px-5 py-3">{t.users.th.created}</th>
                   <th className="px-5 py-3 text-right">{t.users.th.actions}</th>
                 </tr>
@@ -95,6 +96,7 @@ export const UsersList = () => {
                         {t.roles[u.role] || u.role}
                       </span>
                     </td>
+                    <td className="px-5 py-4 text-zinc-300">{u.department ? t.departments[u.department] : "—"}</td>
                     <td className="px-5 py-4 text-zinc-400 font-mono text-xs">
                       {new Date(u.created_at).toLocaleDateString()}
                     </td>
@@ -133,13 +135,23 @@ const UserDialog = ({ item, onClose, onSaved }) => {
   const { lang } = useLang();
   const t = adminI18n[lang];
   const isEdit = !!item;
+  const PERMISSIONS = ["view_leads", "edit_projects", "delete_projects", "manage_files"];
+  const DEPARTMENTS = ["sales", "design", "engineering", "finance", "it"];
   const [form, setForm] = useState({
     username: item?.username || "",
     password: "",
     full_name: item?.full_name || "",
     role: item?.role || "user",
+    department: item?.department || "",
+    permissions: item?.permissions || [],
   });
   const [saving, setSaving] = useState(false);
+
+  const togglePerm = (p) =>
+    setForm((s) => ({
+      ...s,
+      permissions: s.permissions.includes(p) ? s.permissions.filter((x) => x !== p) : [...s.permissions, p],
+    }));
 
   const submit = async (e) => {
     e.preventDefault();
@@ -150,6 +162,10 @@ const UserDialog = ({ item, onClose, onSaved }) => {
         if (form.password) payload.password = form.password;
         if (form.full_name !== (item.full_name || "")) payload.full_name = form.full_name;
         if (form.role !== item.role) payload.role = form.role;
+        if ((form.department || "") !== (item.department || "")) payload.department = form.department || null;
+        const oldPerms = JSON.stringify((item.permissions || []).slice().sort());
+        const newPerms = JSON.stringify(form.permissions.slice().sort());
+        if (oldPerms !== newPerms) payload.permissions = form.permissions;
         if (Object.keys(payload).length) {
           await api.patch(`/users/${item.id}`, payload);
         }
@@ -159,6 +175,8 @@ const UserDialog = ({ item, onClose, onSaved }) => {
           password: form.password,
           full_name: form.full_name || null,
           role: form.role,
+          department: form.department || null,
+          permissions: form.permissions,
         });
       }
       toast.success(t.common.save_ok);
@@ -171,8 +189,8 @@ const UserDialog = ({ item, onClose, onSaved }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose} data-testid="user-dialog">
-      <div className="bg-[#0F0F0F] border border-white/10 w-full max-w-md p-8 relative" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" onClick={onClose} data-testid="user-dialog">
+      <div className="bg-[#0F0F0F] border border-white/10 w-full max-w-lg p-8 relative my-8" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 text-zinc-500 hover:text-white" data-testid="user-dialog-close">
           <X size={18} />
         </button>
@@ -185,45 +203,50 @@ const UserDialog = ({ item, onClose, onSaved }) => {
 
         <form onSubmit={submit} className="flex flex-col gap-5" data-testid="user-form">
           <Field label={t.user_form.f_username}>
-            <input
-              data-testid="uf-username"
-              required
-              minLength={2}
-              disabled={isEdit}
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              className="industrial-input disabled:opacity-60"
-            />
+            <input data-testid="uf-username" required minLength={2} disabled={isEdit} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="industrial-input disabled:opacity-60" />
           </Field>
           <Field label={isEdit ? t.user_form.f_password_keep : t.user_form.f_password}>
-            <input
-              data-testid="uf-password"
-              type="password"
-              minLength={isEdit ? 0 : 6}
-              required={!isEdit}
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="industrial-input"
-            />
+            <input data-testid="uf-password" type="password" minLength={isEdit ? 0 : 6} required={!isEdit} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="industrial-input" />
           </Field>
           <Field label={t.user_form.f_full_name}>
-            <input
-              data-testid="uf-full-name"
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              className="industrial-input"
-            />
+            <input data-testid="uf-full-name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="industrial-input" />
           </Field>
-          <Field label={t.user_form.f_role}>
-            <select
-              data-testid="uf-role"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="industrial-input appearance-none"
-            >
-              {ROLES.map((r) => <option key={r} value={r}>{t.roles[r]}</option>)}
-            </select>
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={t.user_form.f_role}>
+              <select data-testid="uf-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="industrial-input appearance-none">
+                {ROLES.map((r) => <option key={r} value={r}>{t.roles[r]}</option>)}
+              </select>
+            </Field>
+            <Field label={lang === "cn" ? "部门" : "Department"}>
+              <select data-testid="uf-department" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="industrial-input appearance-none">
+                <option value="">—</option>
+                {DEPARTMENTS.map((d) => <option key={d} value={d}>{t.departments[d]}</option>)}
+              </select>
+            </Field>
+          </div>
+
+          {/* Permissions: only relevant for 'user' role */}
+          {form.role === "user" && (
+            <Field label={lang === "cn" ? "权限" : "Permissions"}>
+              <div className="grid grid-cols-2 gap-2 border border-white/10 bg-white/[0.02] p-4">
+                {PERMISSIONS.map((p) => {
+                  const on = form.permissions.includes(p);
+                  return (
+                    <label key={p} className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer select-none" data-testid={`uf-perm-${p}-row`}>
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={() => togglePerm(p)}
+                        data-testid={`uf-perm-${p}`}
+                        className="w-4 h-4 accent-[#0F6B3F]"
+                      />
+                      <span>{t.permissions[p]}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </Field>
+          )}
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
             <button type="button" onClick={onClose} className="px-5 h-10 border border-white/10 text-zinc-300 hover:text-white text-sm uppercase tracking-wide">

@@ -32,7 +32,6 @@ export const Navbar = () => {
     { id: "solutions", to: "/solutions", label: t.nav.solutions },
     { id: "engineering", to: "/engineering", label: t.nav.engineering },
     { id: "cases", to: "/cases", label: t.nav.cases },
-    { id: "contact", to: "/contact", label: t.nav.contact },
   ];
 
   return (
@@ -58,20 +57,20 @@ export const Navbar = () => {
           <img
             src="/logo.png"
             alt="Topchampion logo"
-            className="w-11 h-11 lg:w-[52px] lg:h-[52px] object-contain"
+            className="w-12 h-12 lg:w-14 lg:h-14 object-contain"
           />
           <div className="leading-tight">
-            <div className="font-heading font-bold text-white text-[13px] xl:text-[15px] tracking-tight uppercase whitespace-nowrap">
-              Topchampion Electric &amp; Automation
-            </div>
-            <div className="font-mono text-[10px] xl:text-[11px] text-zinc-500 tracking-[0.18em] uppercase whitespace-nowrap">
+            <div className="font-heading font-bold text-white text-[15px] lg:text-[17px] tracking-tight whitespace-nowrap">
               苏州赛冠 电气 &amp; 自动化
+            </div>
+            <div className="font-mono text-[9px] lg:text-[10px] text-zinc-500 tracking-[0.18em] uppercase whitespace-nowrap mt-0.5">
+              Topchampion Electric &amp; Automation
             </div>
           </div>
         </a>
 
         {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-2 xl:gap-4">
+        <nav className="hidden lg:flex items-center gap-2 xl:gap-4 ml-8 xl:ml-16">
           {navLinks.map((l) => {
             const active = location.pathname === l.to;
             return (

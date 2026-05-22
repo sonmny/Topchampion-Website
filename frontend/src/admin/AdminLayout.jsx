@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, Users, LogOut, Globe, UserCircle } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Users, LogOut, Globe, UserCircle, Inbox } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { useLang } from "../i18n/LangContext";
 import { adminI18n } from "../i18n/admin";
@@ -15,6 +15,10 @@ export const AdminLayout = ({ children }) => {
     { to: "/admin", label: t.nav.dashboard, icon: LayoutDashboard, end: true },
     { to: "/admin/projects", label: t.nav.projects, icon: FolderKanban },
   ];
+  const canViewLeads = user?.role === "admin" || (user?.permissions || []).includes("view_leads");
+  if (canViewLeads) {
+    links.push({ to: "/admin/leads", label: t.nav.leads || "客户咨询", icon: Inbox });
+  }
   if (user?.role === "admin") {
     links.push({ to: "/admin/users", label: t.nav.users, icon: Users });
   }

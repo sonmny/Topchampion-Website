@@ -44,14 +44,14 @@ export const Footer = () => {
               <img
                 src="/logo.png"
                 alt="Topchampion logo"
-                className="w-12 h-12 object-contain"
+                className="w-14 h-14 object-contain"
               />
               <div>
-                <div className="font-heading font-bold text-white text-base tracking-tight uppercase">
-                  Topchampion Electric &amp; Automation
+                <div className="font-heading font-bold text-white text-lg tracking-tight">
+                  苏州赛冠 电气 &amp; 自动化
                 </div>
-                <div className="font-mono text-[10px] text-zinc-500 tracking-[0.2em] uppercase">
-                  苏州赛冠 · 电气 &amp; 自动化
+                <div className="font-mono text-[10px] text-zinc-500 tracking-[0.2em] uppercase mt-1">
+                  Topchampion Electric &amp; Automation
                 </div>
               </div>
             </div>

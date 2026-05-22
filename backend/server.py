@@ -40,6 +40,8 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_UPLOAD_BYTES = int(os.environ.get('MAX_UPLOAD_MB', '25')) * 1024 * 1024
 
 Role = Literal["admin", "user", "customer"]
+Department = Literal["sales", "design", "engineering", "finance", "it"]
+PERMISSION_SET = {"view_leads", "edit_projects", "delete_projects", "manage_files"}
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
@@ -99,6 +101,21 @@ async def get_current_user(request: Request) -> dict:
     return user
 
 
+def has_perm(user: dict, perm: str) -> bool:
+    if user.get("role") == "admin":
+        return True
+    return perm in (user.get("permissions") or [])
+
+
+def require_perm(*perms: str):
+    """Allow if admin OR user has at least one of the listed perms."""
+    async def _dep(current=Depends(get_current_user)):
+        if any(has_perm(current, p) for p in perms):
+            return current
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return _dep
+
+
 def require_role(*allowed: str):
     async def _dep(current=Depends(get_current_user)):
         if current["role"] not in allowed:
@@ -117,6 +134,8 @@ class UserOut(BaseModel):
     username: str
     full_name: Optional[str] = None
     role: Role
+    department: Optional[Department] = None
+    permissions: List[str] = []
     created_at: datetime
 
 
@@ -136,12 +155,16 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=6, max_length=128)
     full_name: Optional[str] = Field(None, max_length=120)
     role: Role
+    department: Optional[Department] = None
+    permissions: Optional[List[str]] = None
 
 
 class UserUpdate(BaseModel):
     password: Optional[str] = Field(None, min_length=6, max_length=128)
     full_name: Optional[str] = Field(None, max_length=120)
     role: Optional[Role] = None
+    department: Optional[Department] = None
+    permissions: Optional[List[str]] = None
 
 
 class ProjectFile(BaseModel):
@@ -270,34 +293,136 @@ async def health():
 
 
 # ----- Existing leads (public form) -----
-class LeadCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=120)
-    company: str = Field(..., min_length=1, max_length=200)
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=40)
-    industry: Literal["tire_mfg", "bess", "data_center", "other"]
-    plc_brand: Literal["rockwell", "siemens", "schneider"]
-    project_description: str = Field(..., min_length=5, max_length=4000)
-
-
-class Lead(LeadCreate):
+class LeadFile(BaseModel):
     id: str
+    filename: str
+    size: int
+    content_type: str
+    uploaded_at: datetime
+
+
+class Lead(BaseModel):
+    id: str
+    name: str
+    company: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    industry: Literal["tire_mfg", "bess", "data_center", "other"]
+    country: Optional[str] = None
+    project_description: str
+    file_meta: Optional[LeadFile] = None
+    status: Literal["new", "viewed", "closed"] = "new"
     created_at: datetime
 
 
+ALLOWED_LEAD_FILE_EXT = {".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".doc", ".docx", ".xls", ".xlsx", ".zip"}
+
+
 @api_router.post("/leads", response_model=Lead, status_code=201)
-async def create_lead(payload: LeadCreate):
-    doc = payload.model_dump()
-    doc["id"] = str(uuid.uuid4())
-    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+async def create_lead(
+    name: str = Form(...),
+    company: str = Form(...),
+    industry: str = Form(...),
+    project_description: str = Form(...),
+    email: Optional[str] = Form(None),
+    phone: Optional[str] = Form(None),
+    country: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+):
+    if industry not in ("tire_mfg", "bess", "data_center", "other"):
+        raise HTTPException(status_code=422, detail="Invalid industry")
+    if len(project_description.strip()) < 5:
+        raise HTTPException(status_code=422, detail="project_description too short")
+    lead_id = str(uuid.uuid4())
+    file_meta = None
+    if file is not None and file.filename:
+        suffix = Path(file.filename).suffix.lower()
+        if suffix not in ALLOWED_LEAD_FILE_EXT:
+            raise HTTPException(status_code=415, detail=f"Unsupported file type {suffix}")
+        data = await file.read()
+        if len(data) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail=f"File too large (max {MAX_UPLOAD_BYTES // (1024*1024)} MB)")
+        fid = str(uuid.uuid4())
+        disk_path = UPLOAD_DIR / f"lead_{fid}{suffix}"
+        with open(disk_path, "wb") as fh:
+            fh.write(data)
+        file_meta = {
+            "id": fid,
+            "filename": file.filename,
+            "size": len(data),
+            "content_type": file.content_type or mimetypes.guess_type(file.filename)[0] or "application/octet-stream",
+            "uploaded_at": datetime.now(timezone.utc).isoformat(),
+            "_ext": suffix,
+        }
+    doc = {
+        "id": lead_id,
+        "name": name.strip(),
+        "company": company.strip(),
+        "email": email.strip() if email else None,
+        "phone": phone.strip() if phone else None,
+        "industry": industry,
+        "country": country.strip() if country else None,
+        "project_description": project_description.strip(),
+        "file_meta": file_meta,
+        "status": "new",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
     await db.leads.insert_one(dict(doc))
-    return _serialize(doc)
+    out = dict(doc)
+    if out.get("file_meta"):
+        out["file_meta"] = {k: v for k, v in out["file_meta"].items() if not k.startswith("_")}
+    return _serialize(out)
 
 
 @api_router.get("/leads", response_model=List[Lead])
-async def list_leads(_: dict = Depends(require_admin)):
+async def list_leads(_: dict = Depends(require_perm("view_leads"))):
     docs = await db.leads.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
-    return [_serialize(d) for d in docs]
+    cleaned = []
+    for d in docs:
+        if d.get("file_meta"):
+            d["file_meta"] = {k: v for k, v in d["file_meta"].items() if not k.startswith("_")}
+        cleaned.append(_serialize(d))
+    return cleaned
+
+
+@api_router.get("/leads/{lead_id}", response_model=Lead)
+async def get_lead(lead_id: str, current=Depends(require_perm("view_leads"))):
+    doc = await db.leads.find_one({"id": lead_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    # Mark viewed
+    if doc.get("status") == "new":
+        await db.leads.update_one({"id": lead_id}, {"$set": {"status": "viewed"}})
+        doc["status"] = "viewed"
+    if doc.get("file_meta"):
+        doc["file_meta"] = {k: v for k, v in doc["file_meta"].items() if not k.startswith("_")}
+    return _serialize(doc)
+
+
+@api_router.patch("/leads/{lead_id}", response_model=Lead)
+async def update_lead_status(lead_id: str, status: str = Form(...), _: dict = Depends(require_perm("view_leads"))):
+    if status not in ("new", "viewed", "closed"):
+        raise HTTPException(status_code=422, detail="Invalid status")
+    res = await db.leads.update_one({"id": lead_id}, {"$set": {"status": status}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    doc = await db.leads.find_one({"id": lead_id}, {"_id": 0})
+    if doc.get("file_meta"):
+        doc["file_meta"] = {k: v for k, v in doc["file_meta"].items() if not k.startswith("_")}
+    return _serialize(doc)
+
+
+@api_router.get("/leads/{lead_id}/file")
+async def download_lead_file(lead_id: str, _: dict = Depends(require_perm("view_leads"))):
+    doc = await db.leads.find_one({"id": lead_id}, {"_id": 0})
+    if not doc or not doc.get("file_meta"):
+        raise HTTPException(status_code=404, detail="File not found")
+    fm = doc["file_meta"]
+    ext = fm.get("_ext") or Path(fm["filename"]).suffix.lower() or ".bin"
+    disk_path = UPLOAD_DIR / f"lead_{fm['id']}{ext}"
+    if not disk_path.exists():
+        raise HTTPException(status_code=410, detail="File missing on disk")
+    return FileResponse(disk_path, media_type=fm.get("content_type", "application/octet-stream"), filename=fm["filename"])
 
 
 # ---------------- Auth ----------------
@@ -349,12 +474,15 @@ async def list_users(_: dict = Depends(require_admin)):
 async def create_user(payload: UserCreate, _: dict = Depends(require_admin)):
     if await db.users.find_one({"username": payload.username.strip()}):
         raise HTTPException(status_code=409, detail="Username already exists")
+    perms = [p for p in (payload.permissions or []) if p in PERMISSION_SET]
     doc = {
         "id": str(uuid.uuid4()),
         "username": payload.username.strip(),
         "password_hash": hash_password(payload.password),
         "full_name": payload.full_name,
         "role": payload.role,
+        "department": payload.department,
+        "permissions": perms,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.users.insert_one(dict(doc))
@@ -373,12 +501,15 @@ async def update_user(user_id: str, payload: UserUpdate, current: dict = Depends
     if payload.full_name is not None:
         upd["full_name"] = payload.full_name
     if payload.role:
-        # Prevent admin from demoting themselves if they are the last admin
         if existing["id"] == current["id"] and payload.role != "admin":
             admin_count = await db.users.count_documents({"role": "admin"})
             if admin_count <= 1:
                 raise HTTPException(status_code=400, detail="Cannot demote the last admin")
         upd["role"] = payload.role
+    if payload.department is not None:
+        upd["department"] = payload.department
+    if payload.permissions is not None:
+        upd["permissions"] = [p for p in payload.permissions if p in PERMISSION_SET]
     if upd:
         await db.users.update_one({"id": user_id}, {"$set": upd})
     fresh = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
