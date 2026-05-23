@@ -44,7 +44,7 @@ MAX_UPLOAD_BYTES = int(os.environ.get('MAX_UPLOAD_MB', '25')) * 1024 * 1024
 
 Role = Literal["admin", "user", "customer"]
 Department = Literal["sales", "design", "engineering", "finance", "it"]
-PERMISSION_SET = {"view_leads", "edit_projects", "delete_projects", "manage_files"}
+PERMISSION_SET = {"view_leads", "edit_projects", "delete_projects", "manage_files", "view_progress"}
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
@@ -174,11 +174,25 @@ class ProjectFile(BaseModel):
     id: str
     filename: str
     display_name: Optional[str] = None
-    category: Literal["code", "drawing"] = "drawing"
+    category: Literal["code", "drawing", "photo"] = "drawing"
     size: int
     content_type: str
     uploaded_at: datetime
+    uploaded_by: Optional[str] = None       # user id
+    uploaded_by_name: Optional[str] = None  # full_name or username (denormalized for display)
     thumb_b64: Optional[str] = None  # base64 PNG data-uri for image previews
+
+
+class StatusEvent(BaseModel):
+    """Audit event in a project's status_history."""
+    id: str
+    kind: Literal["created", "request_advance", "approved", "rejected"]
+    from_status: Optional[str] = None
+    to_status: Optional[str] = None
+    by_user_id: str
+    by_user_name: Optional[str] = None
+    note: Optional[str] = None
+    at: datetime
 
 
 class ProjectIn(BaseModel):
@@ -188,6 +202,8 @@ class ProjectIn(BaseModel):
     industry: Optional[Literal["tire_mfg", "semiconductor", "power_generation", "auto_ev", "data_center", "bess", "other"]] = None
     plc_brand: Optional[Literal["rockwell", "siemens", "schneider", "other"]] = None
     status: Optional[Literal["draft", "in_design", "in_production", "commissioning", "delivered", "archived"]] = "draft"
+    pending_status: Optional[Literal["in_design", "in_production", "commissioning", "delivered", "archived"]] = None
+    status_history: Optional[List[StatusEvent]] = None
     description: Optional[str] = Field(None, max_length=4000)
     parameters: Optional[dict] = None  # arbitrary key/value technical parameters (legacy, no longer editable from UI)
     drawing_urls: Optional[List[str]] = None  # external drawing links (legacy, no longer editable from UI)
@@ -209,7 +225,16 @@ class ShowcaseUpdate(BaseModel):
 
 class FileUpdate(BaseModel):
     display_name: Optional[str] = Field(None, max_length=200)
-    category: Optional[Literal["code", "drawing"]] = None
+    category: Optional[Literal["code", "drawing", "photo"]] = None
+
+
+class StatusAdvanceRequest(BaseModel):
+    to_status: Literal["in_design", "in_production", "commissioning", "delivered", "archived"]
+    note: Optional[str] = Field(None, max_length=400)
+
+
+class StatusReviewRequest(BaseModel):
+    note: Optional[str] = Field(None, max_length=400)
 
 
 class SelfProfileUpdate(BaseModel):
@@ -241,6 +266,13 @@ def _serialize(doc: dict) -> dict:
             if isinstance(f.get("uploaded_at"), str):
                 try:
                     f["uploaded_at"] = datetime.fromisoformat(f["uploaded_at"])
+                except ValueError:
+                    pass
+    if "status_history" in doc and isinstance(doc["status_history"], list):
+        for e in doc["status_history"]:
+            if isinstance(e.get("at"), str):
+                try:
+                    e["at"] = datetime.fromisoformat(e["at"])
                 except ValueError:
                     pass
     return doc
@@ -551,9 +583,21 @@ async def list_projects(current=Depends(get_current_user)):
 async def create_project(payload: ProjectIn, current=Depends(require_admin)):
     now = datetime.now(timezone.utc).isoformat()
     doc = payload.model_dump()
+    initial_event = {
+        "id": str(uuid.uuid4()),
+        "kind": "created",
+        "from_status": None,
+        "to_status": doc.get("status") or "draft",
+        "by_user_id": current["id"],
+        "by_user_name": current.get("full_name") or current.get("username"),
+        "note": None,
+        "at": now,
+    }
     doc.update({
         "id": str(uuid.uuid4()),
         "files": [],
+        "pending_status": None,
+        "status_history": [initial_event],
         "created_at": now,
         "updated_at": now,
         "created_by": current["id"],
@@ -600,6 +644,108 @@ async def delete_project(pid: str, _: dict = Depends(require_admin)):
     await db.projects.delete_one({"id": pid})
 
 
+# ---------------- Status workflow ----------------
+@projects_router.post("/{pid}/request-advance", response_model=ProjectOut)
+async def request_status_advance(pid: str, payload: StatusAdvanceRequest, current: dict = Depends(get_current_user)):
+    """Anyone with edit_projects perm, view_progress perm, or admin role, or assigned customer can request an advance.
+    Sets `pending_status` and appends a `request_advance` event."""
+    doc = await db.projects.find_one({"id": pid}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Project not found")
+    allowed = (
+        current.get("role") == "admin"
+        or "edit_projects" in (current.get("permissions") or [])
+        or "view_progress" in (current.get("permissions") or [])
+        or doc.get("customer_user_id") == current.get("id")
+    )
+    if not allowed:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if doc.get("pending_status"):
+        raise HTTPException(status_code=409, detail="A previous advance request is already pending review")
+    if doc.get("status") == "archived":
+        raise HTTPException(status_code=409, detail="Archived projects cannot be advanced further")
+    now = datetime.now(timezone.utc).isoformat()
+    event = {
+        "id": str(uuid.uuid4()),
+        "kind": "request_advance",
+        "from_status": doc.get("status"),
+        "to_status": payload.to_status,
+        "by_user_id": current["id"],
+        "by_user_name": current.get("full_name") or current.get("username"),
+        "note": payload.note,
+        "at": now,
+    }
+    await db.projects.update_one(
+        {"id": pid},
+        {
+            "$set": {"pending_status": payload.to_status, "updated_at": now},
+            "$push": {"status_history": event},
+        },
+    )
+    fresh = await db.projects.find_one({"id": pid}, {"_id": 0})
+    return _serialize(fresh)
+
+
+@projects_router.post("/{pid}/approve-advance", response_model=ProjectOut)
+async def approve_status_advance(pid: str, payload: StatusReviewRequest, current: dict = Depends(require_admin)):
+    doc = await db.projects.find_one({"id": pid}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Project not found")
+    pend = doc.get("pending_status")
+    if not pend:
+        raise HTTPException(status_code=409, detail="No pending advance to approve")
+    now = datetime.now(timezone.utc).isoformat()
+    event = {
+        "id": str(uuid.uuid4()),
+        "kind": "approved",
+        "from_status": doc.get("status"),
+        "to_status": pend,
+        "by_user_id": current["id"],
+        "by_user_name": current.get("full_name") or current.get("username"),
+        "note": payload.note,
+        "at": now,
+    }
+    await db.projects.update_one(
+        {"id": pid},
+        {
+            "$set": {"status": pend, "pending_status": None, "updated_at": now},
+            "$push": {"status_history": event},
+        },
+    )
+    fresh = await db.projects.find_one({"id": pid}, {"_id": 0})
+    return _serialize(fresh)
+
+
+@projects_router.post("/{pid}/reject-advance", response_model=ProjectOut)
+async def reject_status_advance(pid: str, payload: StatusReviewRequest, current: dict = Depends(require_admin)):
+    doc = await db.projects.find_one({"id": pid}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Project not found")
+    pend = doc.get("pending_status")
+    if not pend:
+        raise HTTPException(status_code=409, detail="No pending advance to reject")
+    now = datetime.now(timezone.utc).isoformat()
+    event = {
+        "id": str(uuid.uuid4()),
+        "kind": "rejected",
+        "from_status": doc.get("status"),
+        "to_status": pend,
+        "by_user_id": current["id"],
+        "by_user_name": current.get("full_name") or current.get("username"),
+        "note": payload.note,
+        "at": now,
+    }
+    await db.projects.update_one(
+        {"id": pid},
+        {
+            "$set": {"pending_status": None, "updated_at": now},
+            "$push": {"status_history": event},
+        },
+    )
+    fresh = await db.projects.find_one({"id": pid}, {"_id": 0})
+    return _serialize(fresh)
+
+
 def _make_thumb_b64(data: bytes, content_type: str, suffix: str) -> Optional[str]:
     """Generate a small base64 PNG data-uri thumbnail for image files only."""
     if not PIL_AVAILABLE:
@@ -625,19 +771,22 @@ async def upload_project_file(
     file: UploadFile = File(...),
     category: str = Form("drawing"),
     display_name: Optional[str] = Form(None),
-    _: dict = Depends(require_admin),
+    current: dict = Depends(get_current_user),
 ):
+    # Admin OR (logged-in user with manage_files permission)
+    if current.get("role") != "admin" and "manage_files" not in (current.get("permissions") or []):
+        raise HTTPException(status_code=403, detail="Forbidden")
     project = await db.projects.find_one({"id": pid}, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if category not in ("code", "drawing"):
+    if category not in ("code", "drawing", "photo"):
         category = "drawing"
     data = await file.read()
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail=f"File too large (max {MAX_UPLOAD_BYTES // (1024*1024)} MB)")
     file_id = str(uuid.uuid4())
     suffix = Path(file.filename or "").suffix.lower() or ".bin"
-    if suffix not in (".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".bin", ".txt", ".json", ".xml", ".yaml", ".yml", ".py", ".js", ".csv"):
+    if suffix not in (".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".bin", ".txt", ".json", ".xml", ".yaml", ".yml", ".py", ".js", ".csv", ".heic", ".heif"):
         suffix = ".bin"
     disk_path = UPLOAD_DIR / f"{file_id}{suffix}"
     with open(disk_path, "wb") as fh:
@@ -652,6 +801,8 @@ async def upload_project_file(
         "size": len(data),
         "content_type": content_type,
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "uploaded_by": current["id"],
+        "uploaded_by_name": current.get("full_name") or current.get("username"),
         "thumb_b64": thumb,
         "_ext": suffix,
     }

@@ -1,5 +1,27 @@
 // Curated list of major industrial countries / regions, bilingual.
 // Code is ISO 3166-1 alpha-2 where possible; "OTHER" for fallback.
+// Priority codes (always pinned to the top of the dropdown, in this order):
+export const PRIORITY_CODES = ["CN", "US", "HK", "TW"];
+
+/**
+ * Returns the country list sorted by priority first, then alphabetically
+ * by the active language. Chinese sort uses localeCompare("zh-Hans-CN")
+ * which orders by Pinyin then stroke; English uses default sort.
+ */
+export function sortedCountries(lang = "en") {
+  const priority = PRIORITY_CODES
+    .map((code) => COUNTRIES.find((c) => c.code === code))
+    .filter(Boolean);
+  const rest = COUNTRIES
+    .filter((c) => !PRIORITY_CODES.includes(c.code) && c.code !== "OTHER")
+    .sort((a, b) => {
+      const key = lang === "cn" ? "cn" : "en";
+      return a[key].localeCompare(b[key], lang === "cn" ? "zh-Hans-CN" : "en", { sensitivity: "base" });
+    });
+  const other = COUNTRIES.find((c) => c.code === "OTHER");
+  return [...priority, ...rest, ...(other ? [other] : [])];
+}
+
 export const COUNTRIES = [
   { code: "CN", en: "China", cn: "中国" },
   { code: "HK", en: "Hong Kong SAR", cn: "中国香港" },

@@ -9,7 +9,7 @@ import {
 } from "./ui/select";
 import { toast } from "sonner";
 import { Send, CheckCircle2, ArrowRight, Paperclip, X } from "lucide-react";
-import { COUNTRIES } from "../i18n/countries";
+import { sortedCountries } from "../i18n/countries";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -187,7 +187,7 @@ export const SmartQuoteForm = () => {
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#0F0F0F] border border-white/10 text-white rounded-none max-h-[280px]">
-                    {COUNTRIES.map((c) => (
+                    {sortedCountries(lang).map((c) => (
                       <SelectItem key={c.code} value={c.code} data-testid={`country-${c.code}`} className="rounded-none focus:bg-[#0F6B3F] focus:text-white">
                         {c[lang] || c.en}
                       </SelectItem>

@@ -4,10 +4,11 @@ import { useLang } from "../i18n/LangContext";
 import { Check, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 const IMAGES = [
-  "https://images.unsplash.com/photo-1774229637247-3cd45219826c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwxfHxpbmR1c3RyaWFsJTIwcm9ib3QlMjBhcm0lMjBtYW51ZmFjdHVyaW5nfGVufDB8fHx8MTc3OTIzODQ4Mnww&ixlib=rb-4.1.0&q=85",
-  "https://images.unsplash.com/photo-1563456019560-2b37aa7ad890?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBlbGVjdHJpY2FsJTIwY29udHJvbCUyMHBhbmVsJTIwY2FiaW5ldHxlbnwwfHx8fDE3NzkyMzg0ODJ8MA&ixlib=rb-4.1.0&q=85",
-  "https://images.pexels.com/photos/17489160/pexels-photo-17489160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-  "https://images.unsplash.com/photo-1581090700227-1e37b190418e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+  // Same images mirrored in SolutionsPages.jsx so home + detail look consistent.
+  "https://images.pexels.com/photos/3855962/pexels-photo-3855962.jpeg?w=1400", // 自动化设备 — production line
+  "/assets/products/switchgear-rittal.jpg",                                     // 高/低压控制柜 — real Rittal cabinet
+  "/assets/products/plc-hmi-panel.jpg",                                         // 自控系统硬件集成 — real PLC/HMI panel
+  "https://images.unsplash.com/photo-1551434678-e076c223a692?w=1400&q=80",     // 软件开发 — code/SCADA
 ];
 
 export const Solutions = () => {

@@ -9,10 +9,11 @@ import { SEO } from "../seo/SEO";
 import { serviceSchema } from "../seo/seoConfig";
 
 const IMG = {
-  "tire-production": "https://images.unsplash.com/photo-1774229637247-3cd45219826c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwxfHxpbmR1c3RyaWFsJTIwcm9ib3QlMjBhcm0lMjBtYW51ZmFjdHVyaW5nfGVufDB8fHx8MTc3OTIzODQ4Mnww&ixlib=rb-4.1.0&q=85",
-  "control-cabinets": "/assets/products/cabinet-row-factory.jpg",
+  // Mirrors home Solutions.jsx so cards and detail pages share visuals.
+  "tire-production": "https://images.pexels.com/photos/3855962/pexels-photo-3855962.jpeg?w=1400",
+  "control-cabinets": "/assets/products/switchgear-rittal.jpg",
   "power-generation": "/assets/products/plc-hmi-panel.jpg",
-  "data-center": "/assets/products/switchgear-rittal.jpg",
+  "data-center": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=1400&q=80",
 };
 
 export const SolutionsHub = () => {

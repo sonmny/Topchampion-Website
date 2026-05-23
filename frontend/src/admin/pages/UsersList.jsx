@@ -135,7 +135,7 @@ const UserDialog = ({ item, onClose, onSaved }) => {
   const { lang } = useLang();
   const t = adminI18n[lang];
   const isEdit = !!item;
-  const PERMISSIONS = ["view_leads", "edit_projects", "delete_projects", "manage_files"];
+  const PERMISSIONS = ["view_leads", "edit_projects", "delete_projects", "manage_files", "view_progress"];
   const DEPARTMENTS = ["sales", "design", "engineering", "finance", "it"];
   const [form, setForm] = useState({
     username: item?.username || "",

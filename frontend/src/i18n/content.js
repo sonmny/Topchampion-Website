@@ -40,9 +40,9 @@ export const content = {
       label: "By the numbers",
       items: [
         { value: "20", label: "Years in Business · since 2005" },
-        { value: "4", label: "Global Sites · CN · VN · KH" },
+        { value: "4", label: "Global Sites & Offices" },
         { value: "27+", label: "Countries Served" },
-        { value: "1,500+", label: "Cabinets Delivered Annually" },
+        { value: "3,000+", label: "Tons Shipped Annually" },
       ],
     },
     solutions: {
@@ -52,9 +52,9 @@ export const content = {
       items: [
         {
           tag: "01 / Automation",
-          name: "Tire & Rubber Production Lines",
-          desc: "MES-integrated robotic cells, vision QC, and SCADA orchestration — delivered for Goodyear, Pirelli, Sumitomo and Cooper Chengshan.",
-          features: ["MES & SCADA integration", "Tread + compounding lines", "Vision-based QA/QC", "Rockwell ControlLogix / Siemens"],
+          name: "Automation Equipment",
+          desc: "Tire & rubber production lines, robotic cells, conveyor PLCs and equipment control cabinets — for Goodyear, Pirelli, Sumitomo, Cooper Chengshan.",
+          features: ["Tire & rubber production lines", "Equipment control cabinets", "Robotic & conveyor PLCs", "Rockwell ControlLogix / Siemens"],
         },
         {
           tag: "02 / Power",
@@ -63,16 +63,16 @@ export const content = {
           features: ["ABB MNS-E LV switchgear", "Rittal Ri4Power assemblies", "IEC 61439 / UL 891", "Arc-fault containment"],
         },
         {
-          tag: "03 / Power Generation",
-          name: "Gas / Diesel Gen-Set Control",
-          desc: "Generator station control systems for gas and diesel plants — V-POWER Singapore & Myanmar, ComAp SE Asia, Trilogy Power (USA→Canada).",
-          features: ["ComAp InteliGen / InteliSys", "Synchronization & paralleling", "1 MW to 50 MW stations", "Remote monitoring & SCADA"],
+          tag: "03 / Hardware Integration",
+          name: "Control System Hardware Integration",
+          desc: "Gas / diesel gen-set control, semiconductor cleanroom PLC + water-treatment, BoP electrical for V-POWER, ComAp, Trilogy Power, TSMC, SMIC.",
+          features: ["ComAp gen-set integration", "Cleanroom PLC + water-treatment", "BoP electrical packages", "1 MW – 50 MW power stations"],
         },
         {
-          tag: "04 / Semiconductor & Data Center",
-          name: "Cleanroom & Data Center Distribution",
-          desc: "PLC panels, water-treatment, VFD and distribution boards for TSMC, SMIC, Tianma, CSOT, Huawei, Alibaba and Foxconn facilities.",
-          features: ["PLC + water-treatment systems", "Variable frequency drive panels", "Data room distribution", "Tier III / IV ready"],
+          tag: "04 / Software",
+          name: "Software Development",
+          desc: "SCADA, HMI, MES gateway development for tire, semiconductor, data center, gen-set platforms. ISA-95 aligned, OPC-UA northbound.",
+          features: ["SCADA / HMI development", "MES & ERP gateway", "OPC-UA / Modbus-TCP", "Ignition / AVEVA PI"],
         },
       ],
     },
@@ -163,7 +163,7 @@ export const content = {
         legal: "Certifications",
       },
       links: {
-        solutions: ["Tire Production Lines", "Control Cabinets", "Gen-Set Control", "Cleanroom & Data Center"],
+        solutions: ["Automation Equipment", "Control Cabinets", "Hardware Integration", "Software Development"],
         company: ["About", "Engineering", "Careers", "Smart Quote"],
         legal: ["ISO 9001:2015", "CCC", "CE Marking", "High-Tech Enterprise", "Privacy Policy"],
       },
@@ -209,9 +209,9 @@ export const content = {
       label: "数字见证",
       items: [
         { value: "20", label: "年深耕 · 2005 年成立" },
-        { value: "4", label: "全球生产据点 · 中 / 越 / 柬" },
+        { value: "4", label: "全球生产据点 / 办事处" },
         { value: "27+", label: "服务国家" },
-        { value: "1,500+", label: "年出货柜体" },
+        { value: "3,000+", label: "年出货量 (吨)" },
       ],
     },
     solutions: {
@@ -221,9 +221,9 @@ export const content = {
       items: [
         {
           tag: "01 / 自动化",
-          name: "轮胎与橡胶生产线",
-          desc: "MES 集成的机器人单元、视觉质检与 SCADA 调度 —— 服务固铂(Goodyear)、倍耐力、住友、库珀成山等头部客户。",
-          features: ["MES 与 SCADA 集成", "胎面与密炼生产线", "在线视觉 QA/QC", "Rockwell ControlLogix / Siemens"],
+          name: "自动化设备",
+          desc: "轮胎与橡胶生产线、机器人单元、输送 PLC 与设备控制柜 —— 服务固铂、倍耐力、住友、库珀成山等头部客户。",
+          features: ["轮胎与橡胶生产线", "设备控制柜", "机器人与输送 PLC", "Rockwell ControlLogix / Siemens"],
         },
         {
           tag: "02 / 电力",
@@ -232,16 +232,16 @@ export const content = {
           features: ["ABB MNS-E 低压开关柜", "Rittal Ri4Power 总装", "IEC 61439 / UL 891", "弧故障防护"],
         },
         {
-          tag: "03 / 电力生产",
-          name: "燃气/柴油机组控制",
-          desc: "燃气与柴油发电站机组控制系统 —— V-POWER 新加坡与缅甸燃气电站、ComAp 东南亚、Trilogy Power(美→加)。",
-          features: ["ComAp InteliGen / InteliSys", "同步与并机控制", "1 MW 至 50 MW 电站", "远程监控与 SCADA"],
+          tag: "03 / 硬件集成",
+          name: "自控系统硬件集成",
+          desc: "燃气/柴油机组控制、半导体洁净厂房 PLC + 水处理、BoP 电气 —— 服务 V-POWER、ComAp、Trilogy Power、台积电、中芯等客户。",
+          features: ["ComAp 机组集成", "洁净厂房 PLC + 水处理", "BoP 电气套件", "1 MW – 50 MW 电站"],
         },
         {
-          tag: "04 / 半导体与数据中心",
-          name: "洁净厂房与数据中心配电",
-          desc: "PLC 柜、水处理、变频器与配电柜 —— 服务台积电、中芯、天马、华星光电、华为、阿里巴巴、富士康等客户。",
-          features: ["PLC + 水处理系统", "变频器(VFD)控制柜", "数据机房配电", "Tier III / IV 就绪"],
+          tag: "04 / 软件",
+          name: "软件开发",
+          desc: "为轮胎、半导体、数据中心、机组平台开发 SCADA / HMI / MES 网关。遵循 ISA-95,OPC-UA 北向接入。",
+          features: ["SCADA / HMI 开发", "MES 与 ERP 网关", "OPC-UA / Modbus-TCP", "Ignition / AVEVA PI"],
         },
       ],
     },
@@ -332,7 +332,7 @@ export const content = {
         legal: "认证",
       },
       links: {
-        solutions: ["轮胎与橡胶生产线", "高/低压控制柜", "发电机组控制", "洁净厂房与数据中心"],
+        solutions: ["自动化设备", "高/低压控制柜", "自控系统硬件集成", "软件开发"],
         company: ["关于我们", "工程能力", "招贤纳士", "智能报价"],
         legal: ["ISO 9001:2015", "CCC 认证", "CE 标识", "国家高新技术企业", "隐私政策"],
       },

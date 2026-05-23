@@ -28,7 +28,7 @@ export const EngineeringTimeline = () => {
             <div className="mt-10 inline-flex items-center gap-3 border border-white/10 px-4 py-3 bg-white/[0.02]">
               <span className="w-2 h-2 bg-[#C9A063] pulse-dot rounded-full" />
               <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-300">
-                FAT · SAT · 24/7 Support
+                MON · FRI · 24/7 Support
               </span>
             </div>
           </div>

@@ -47,7 +47,28 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
 - Admin pages at `/admin`: Login, Dashboard, Projects list/detail/form, Users (admin-only)
 - 24/24 backend + frontend admin tests pass (iteration_3)
 
-## Phase 8 (2026-02) — 通用 CMS 内容管理模块
+## Phase 9 (2026-02) — Six-Item Major Update
+- **#1 数字见证 (Stats)**:
+  - 文案修订:"全球生产据点/办事处"(删除中/越/柬)、"年出货量 (吨)"
+  - 后端新增 `site_stats` 集合 + CRUD,前端 CMS 第 5 个 tab 可编辑 + Stats.jsx 优先消费 CMS
+- **#2 解决方案重命名 + 真实配图**:
+  - "轮胎与橡胶生产线"→**自动化设备**,"燃气/柴油机组控制"→**自控系统硬件集成**,"洁净厂房与数据中心配电"→**软件开发**
+  - 首页 Solutions.jsx 与详情页 SolutionsPages.jsx 图片完全统一(IMG/IMAGES 共享 4 张:真实生产线、Rittal 开关柜、PLC+HMI、SCADA 代码)
+  - 详情页 slug 保持(`/solutions/tire-production` 等),便于 SEO + 已有链接
+- **#3 工程卓越**:`FAT · SAT · 24/7 Support` → `MON · FRI · 24/7 Support`
+- **#4 国家排序**:`/app/frontend/src/i18n/countries.js` 新增 `PRIORITY_CODES = ["CN","US","HK","TW"]` + `sortedCountries(lang)` 函数,中文按拼音笔画、英文按字母排序
+- **#5 首页认证与合规区**:新组件 `CertsHome.jsx`,展示 4 张证书卡(图片或文字降级),链接到 `/certifications`
+- **#6 项目管理重大改造**:
+  - 删除 ProjectForm 的 PLC Brand 字段
+  - ProjectFile 增加 `uploaded_by` / `uploaded_by_name`,文件卡显示上传者
+  - ProjectFile category 扩展含 "photo",前端独立"工程照片"区块,允许 `manage_files` 权限用户上传(不再仅限 admin)
+  - 状态机:`draft → in_design → in_production → commissioning → delivered → archived`
+  - 后端 3 个新工作流端点 `request-advance`/`approve-advance`/`reject-advance`,管理员审核
+  - 项目模型加 `pending_status` + `status_history`,初始事件在 create 时种子
+  - 前端:`ProjectStatusCard` 6 步进度条 + 申请按钮 + 待审核徽章 + 批准/驳回按钮;`ProjectTimeline` 活动时间线
+  - 新权限 `view_progress` 加入 PERMISSION_SET,UsersList 与 i18n 同步
+- **验证**:所有 6 项 Playwright 截图 + curl 端到端测试通过(状态机:request→approve 完整流程 OK)
+
 - **新增后端**:`/app/backend/cms.py` 完整 CMS 路由,集成到 `register_cms_routes()`
 - **公开只读端点**(任何人访问公开页面时调用):
   - `GET /api/site/certifications` · `GET /api/site/case-studies` · `GET /api/site/client-groups` · `GET /api/site/partners` · `GET /api/site/contact-info`

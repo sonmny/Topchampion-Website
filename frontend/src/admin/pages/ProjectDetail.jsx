@@ -6,7 +6,7 @@ import { adminI18n } from "../../i18n/admin";
 import { api, formatApiError } from "../apiClient";
 import { AdminLayout } from "../AdminLayout";
 import { toast } from "sonner";
-import { Pencil, Trash2, Upload, Download, FileText, FileCode2, FileImage, ExternalLink, Check, X, Megaphone } from "lucide-react";
+import { Pencil, Trash2, Upload, Download, FileText, FileCode2, FileImage, Camera, ExternalLink, Check, X, Megaphone } from "lucide-react";
 
 export const ProjectDetail = () => {
   const { id } = useParams();
@@ -16,10 +16,14 @@ export const ProjectDetail = () => {
   const navigate = useNavigate();
   const [p, setP] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(null); // "drawing" | "code" | null
+  const [uploading, setUploading] = useState(null); // "drawing" | "code" | "photo" | null
+  const [advanceModal, setAdvanceModal] = useState(false);
   const fileDrawRef = useRef(null);
   const fileCodeRef = useRef(null);
+  const filePhotoRef = useRef(null);
   const isAdmin = user?.role === "admin";
+  const canManageFiles = isAdmin || (user?.permissions || []).includes("manage_files");
+  const canRequestAdvance = isAdmin || (user?.permissions || []).includes("edit_projects") || (user?.permissions || []).includes("view_progress");
 
   const load = async () => {
     setLoading(true);
@@ -132,9 +136,42 @@ export const ProjectDetail = () => {
   }
 
   const files = p.files || [];
-  const drawings = files.filter((f) => f.category !== "code");
+  const photos = files.filter((f) => f.category === "photo");
+  const drawings = files.filter((f) => f.category === "drawing");
   const codes = files.filter((f) => f.category === "code");
   const canShowcase = isAdmin || user?.role === "user";
+
+  const STATUS_FLOW = ["draft", "in_design", "in_production", "commissioning", "delivered", "archived"];
+  const currentStatusIdx = STATUS_FLOW.indexOf(p.status || "draft");
+  const nextStatus = currentStatusIdx >= 0 && currentStatusIdx < STATUS_FLOW.length - 1 ? STATUS_FLOW[currentStatusIdx + 1] : null;
+
+  const requestAdvance = async (toStatus, note) => {
+    try {
+      await api.post(`/projects/${id}/request-advance`, { to_status: toStatus, note });
+      toast.success(lang === "cn" ? "已提交审核" : "Submitted for review");
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+  const approveAdvance = async () => {
+    try {
+      await api.post(`/projects/${id}/approve-advance`, {});
+      toast.success(lang === "cn" ? "已批准" : "Approved");
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+  const rejectAdvance = async () => {
+    try {
+      await api.post(`/projects/${id}/reject-advance`, {});
+      toast.success(lang === "cn" ? "已驳回" : "Rejected");
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
 
   return (
     <AdminLayout>
@@ -198,27 +235,64 @@ export const ProjectDetail = () => {
             </div>
           )}
           <div className="bg-[#0A0A0A] p-7 flex flex-col gap-3">
-            <MetaLine label={t.projects.th.plc} value={p.plc_brand ? t.projects.plcs[p.plc_brand] : "—"} />
             <MetaLine label={t.projects.th.client} value={p.client_name || "—"} />
             <MetaLine label={t.projects.th.updated} value={new Date(p.updated_at).toLocaleString()} />
           </div>
         </div>
 
-        {/* Drawings section */}
-        <FileSection
-          title={t.project_detail.files_drawing}
-          category="drawing"
-          items={drawings}
+        {/* Status workflow card */}
+        <ProjectStatusCard
+          p={p}
           isAdmin={isAdmin}
-          uploadLabel={t.project_detail.upload_drawing}
-          uploading={uploading === "drawing"}
-          uploadingLabel={t.project_detail.uploading}
-          onPick={() => fileDrawRef.current?.click()}
-          onDelete={delFile}
-          onRename={renameFile}
-          onDownload={download}
+          canRequestAdvance={canRequestAdvance}
+          nextStatus={nextStatus}
+          STATUS_FLOW={STATUS_FLOW}
+          currentStatusIdx={currentStatusIdx}
           t={t}
+          lang={lang}
+          onRequest={() => setAdvanceModal(true)}
+          onApprove={approveAdvance}
+          onReject={rejectAdvance}
         />
+
+        {/* Photos section */}
+        <div className="mt-12">
+          <FileSection
+            title={lang === "cn" ? "工程照片" : "Engineering Photos"}
+            category="photo"
+            items={photos}
+            isAdmin={canManageFiles}
+            uploadLabel={lang === "cn" ? "上传照片" : "Upload Photo"}
+            uploading={uploading === "photo"}
+            uploadingLabel={t.project_detail.uploading}
+            onPick={() => filePhotoRef.current?.click()}
+            onDelete={delFile}
+            onRename={renameFile}
+            onDownload={download}
+            t={t}
+            lang={lang}
+          />
+        </div>
+        <input ref={filePhotoRef} type="file" hidden onChange={onUpload("photo")} data-testid="file-input-photo" accept=".png,.jpg,.jpeg,.webp,.heic,.heif" />
+
+        {/* Drawings section */}
+        <div className="mt-12">
+          <FileSection
+            title={t.project_detail.files_drawing}
+            category="drawing"
+            items={drawings}
+            isAdmin={canManageFiles}
+            uploadLabel={t.project_detail.upload_drawing}
+            uploading={uploading === "drawing"}
+            uploadingLabel={t.project_detail.uploading}
+            onPick={() => fileDrawRef.current?.click()}
+            onDelete={delFile}
+            onRename={renameFile}
+            onDownload={download}
+            t={t}
+            lang={lang}
+          />
+        </div>
         <input ref={fileDrawRef} type="file" hidden onChange={onUpload("drawing")} data-testid="file-input-drawing" accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg" />
 
         {/* Code section */}
@@ -239,8 +313,203 @@ export const ProjectDetail = () => {
           />
         </div>
         <input ref={fileCodeRef} type="file" hidden onChange={onUpload("code")} data-testid="file-input-code" accept=".txt,.json,.xml,.yaml,.yml,.py,.js,.csv,.zip,.bin" />
+
+        {/* Status history timeline */}
+        <ProjectTimeline events={p.status_history || []} t={t} lang={lang} />
       </div>
+
+      {advanceModal && (
+        <AdvanceModal
+          nextStatus={nextStatus}
+          allFlow={STATUS_FLOW}
+          currentIdx={currentStatusIdx}
+          t={t}
+          lang={lang}
+          onClose={() => setAdvanceModal(false)}
+          onSubmit={async (s, n) => { await requestAdvance(s, n); setAdvanceModal(false); }}
+        />
+      )}
     </AdminLayout>
+  );
+};
+
+// ---------------- Status workflow card ----------------
+const STAGE_LABEL_CN = { draft: "草稿", in_design: "设计中", in_production: "生产中", commissioning: "调试中", delivered: "已交付", archived: "已归档" };
+const STAGE_LABEL_EN = { draft: "Draft", in_design: "In Design", in_production: "In Production", commissioning: "Commissioning", delivered: "Delivered", archived: "Archived" };
+
+const ProjectStatusCard = ({ p, isAdmin, canRequestAdvance, nextStatus, STATUS_FLOW, currentStatusIdx, t, lang, onRequest, onApprove, onReject }) => {
+  const L = lang === "cn" ? STAGE_LABEL_CN : STAGE_LABEL_EN;
+  return (
+    <div className="bg-[#070707] border border-white/10 mb-10 p-7" data-testid="project-status-card">
+      <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+        <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063]">
+          {lang === "cn" ? "项目进度" : "Project Progress"}
+        </div>
+        <div className="flex items-center gap-2">
+          {p.pending_status && isAdmin && (
+            <>
+              <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-yellow-400 mr-2" data-testid="pending-badge">
+                {lang === "cn" ? "待审核 →" : "PENDING →"} {L[p.pending_status]}
+              </span>
+              <button onClick={onApprove} data-testid="approve-advance-btn" className="inline-flex items-center gap-1.5 h-9 px-4 bg-[#0F6B3F] hover:bg-[#1A8A52] text-white text-xs font-semibold tracking-wide transition-colors">
+                <Check size={12} /> {lang === "cn" ? "批准" : "Approve"}
+              </button>
+              <button onClick={onReject} data-testid="reject-advance-btn" className="inline-flex items-center gap-1.5 h-9 px-4 border border-white/10 hover:border-red-400/50 hover:text-red-300 text-zinc-300 text-xs font-semibold tracking-wide transition-colors">
+                <X size={12} /> {lang === "cn" ? "驳回" : "Reject"}
+              </button>
+            </>
+          )}
+          {p.pending_status && !isAdmin && (
+            <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-yellow-400" data-testid="pending-badge">
+              {lang === "cn" ? "待管理员审核 →" : "AWAITING REVIEW →"} {L[p.pending_status]}
+            </span>
+          )}
+          {!p.pending_status && nextStatus && canRequestAdvance && (
+            <button onClick={onRequest} data-testid="request-advance-btn" className="inline-flex items-center gap-1.5 h-9 px-4 border border-[#C9A063]/50 text-[#C9A063] hover:bg-[#C9A063] hover:text-black text-xs font-semibold tracking-wide transition-colors">
+              {lang === "cn" ? "申请推进至 →" : "Request advance to →"} {L[nextStatus]}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Stepper */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-px bg-white/10 border border-white/10" data-testid="status-stepper">
+        {STATUS_FLOW.map((s, i) => {
+          const done = i <= currentStatusIdx;
+          const isCurrent = i === currentStatusIdx;
+          const pending = p.pending_status === s;
+          return (
+            <div
+              key={s}
+              data-testid={`stage-${s}`}
+              className={`px-4 py-4 flex flex-col items-start gap-1 transition-colors ${
+                isCurrent ? "bg-[#0F6B3F]/15" : pending ? "bg-yellow-500/10" : done ? "bg-white/[0.03]" : "bg-[#0A0A0A]"
+              }`}
+            >
+              <span className={`font-mono text-[10px] tracking-[0.2em] uppercase ${
+                isCurrent ? "text-white" : pending ? "text-yellow-400" : done ? "text-[#C9A063]" : "text-zinc-600"
+              }`}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className={`text-sm font-medium ${
+                isCurrent ? "text-white" : pending ? "text-yellow-400" : done ? "text-zinc-300" : "text-zinc-600"
+              }`}>
+                {L[s]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ---------------- Status timeline (audit log) ----------------
+const ProjectTimeline = ({ events, t, lang }) => {
+  if (!events || events.length === 0) return null;
+  const L = lang === "cn" ? STAGE_LABEL_CN : STAGE_LABEL_EN;
+  const KIND_LABEL = lang === "cn"
+    ? { created: "项目创建", request_advance: "提交审核", approved: "已批准", rejected: "已驳回" }
+    : { created: "Project created", request_advance: "Advance requested", approved: "Approved", rejected: "Rejected" };
+  const sorted = [...events].sort((a, b) => new Date(b.at) - new Date(a.at));
+  return (
+    <section className="mt-12" data-testid="project-timeline">
+      <div className="flex items-center gap-3 mb-5">
+        <span className="w-7 h-px bg-[#C9A063]" />
+        <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063]">
+          {lang === "cn" ? "活动时间线" : "Activity Timeline"}
+        </span>
+      </div>
+      <div className="bg-[#0A0A0A] border border-white/10">
+        <ol className="divide-y divide-white/5">
+          {sorted.map((e) => (
+            <li key={e.id} className="p-5 flex items-start gap-4" data-testid={`timeline-event-${e.id}`}>
+              <div className={`mt-1 w-2 h-2 shrink-0 ${
+                e.kind === "approved" ? "bg-[#1A8A52]" :
+                e.kind === "rejected" ? "bg-red-500" :
+                e.kind === "request_advance" ? "bg-yellow-400" : "bg-zinc-500"
+              }`} />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-white">
+                  {KIND_LABEL[e.kind]}
+                  {e.to_status && (
+                    <span className="text-zinc-400">
+                      {" "}· {e.from_status ? `${L[e.from_status]} → ` : ""}<span className="text-white font-medium">{L[e.to_status]}</span>
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-zinc-500 font-mono mt-1">
+                  {(e.by_user_name || "—")} · {new Date(e.at).toLocaleString()}
+                </div>
+                {e.note && (
+                  <div className="text-xs text-zinc-400 mt-2 leading-relaxed italic">
+                    "{e.note}"
+                  </div>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+};
+
+// ---------------- Advance request modal ----------------
+const AdvanceModal = ({ nextStatus, allFlow, currentIdx, t, lang, onClose, onSubmit }) => {
+  const L = lang === "cn" ? STAGE_LABEL_CN : STAGE_LABEL_EN;
+  const options = allFlow.slice(currentIdx + 1);
+  const [to, setTo] = useState(nextStatus);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-md" data-testid="advance-modal">
+        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+          <h3 className="font-heading text-lg font-bold">{lang === "cn" ? "申请推进项目阶段" : "Request stage advance"}</h3>
+          <button onClick={onClose} className="text-zinc-400 hover:text-white"><X size={18} /></button>
+        </div>
+        <div className="p-6 flex flex-col gap-4">
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-zinc-500">
+              {lang === "cn" ? "目标阶段" : "Target stage"}
+            </span>
+            <select
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              data-testid="advance-to-select"
+              className="bg-[#0A0A0A] border border-white/10 focus:border-[#C9A063] outline-none h-10 px-3 text-white text-sm"
+            >
+              {options.map((s) => <option key={s} value={s}>{L[s]}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-zinc-500">
+              {lang === "cn" ? "备注 (可选)" : "Note (optional)"}
+            </span>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              data-testid="advance-note"
+              rows={3}
+              placeholder={lang === "cn" ? "例如:图纸已通过内部审核,可推进至生产..." : "e.g. Drawings have passed internal review, ready for production..."}
+              className="bg-[#0A0A0A] border border-white/10 focus:border-[#C9A063] outline-none px-3 py-2 text-white text-sm resize-y"
+            />
+          </label>
+        </div>
+        <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-2">
+          <button onClick={onClose} className="h-10 px-4 border border-white/10 hover:border-[#C9A063] text-zinc-300 hover:text-white text-sm">{lang === "cn" ? "取消" : "Cancel"}</button>
+          <button
+            disabled={!to || busy}
+            onClick={async () => { setBusy(true); await onSubmit(to, note || null); setBusy(false); }}
+            data-testid="advance-submit"
+            className="h-10 px-5 bg-[#0F6B3F] hover:bg-[#1A8A52] text-white text-sm font-semibold tracking-wide transition-colors disabled:opacity-50"
+          >
+            {busy ? "…" : (lang === "cn" ? "提交审核" : "Submit for review")}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -255,7 +524,7 @@ const FileSection = ({ title, category, items, isAdmin, uploadLabel, uploading, 
   <section data-testid={`section-${category}`}>
     <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
       <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-zinc-500 flex items-center gap-3">
-        {category === "code" ? <FileCode2 size={14} className="text-[#C9A063]" /> : <FileImage size={14} className="text-[#C9A063]" />}
+        {category === "code" ? <FileCode2 size={14} className="text-[#C9A063]" /> : category === "photo" ? <Camera size={14} className="text-[#C9A063]" /> : <FileImage size={14} className="text-[#C9A063]" />}
         {title}
         <span className="text-zinc-600">·</span>
         <span className="text-zinc-400">{items.length}</span>

@@ -163,12 +163,6 @@ export const ProjectForm = ({ mode }) => {
               {INDUSTRIES.map((s) => <option key={s} value={s}>{t.projects.industries[s]}</option>)}
             </select>
           </Field>
-          <Field label={t.project_form.f_plc}>
-            <select data-testid="pf-plc" value={form.plc_brand} onChange={(e) => update("plc_brand", e.target.value)} className="industrial-input appearance-none">
-              <option value="">—</option>
-              {PLCS.map((s) => <option key={s} value={s}>{t.projects.plcs[s]}</option>)}
-            </select>
-          </Field>
 
           <div className="md:col-span-2">
             <Field label={t.project_form.f_description}>

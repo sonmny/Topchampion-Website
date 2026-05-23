@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { useLang } from "../i18n/LangContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 const AnimatedValue = ({ value }) => {
   // Animates trailing number; preserves prefix/suffix like "+", "MW", "%"
@@ -39,7 +40,11 @@ const AnimatedValue = ({ value }) => {
 };
 
 export const Stats = () => {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const { data: cmsStats } = useSiteContent("stats");
+  const items = Array.isArray(cmsStats) && cmsStats.length > 0
+    ? cmsStats.map((s) => ({ value: s.value, label: lang === "cn" ? s.label_cn : s.label_en }))
+    : t.stats.items;
   return (
     <section
       data-testid="stats-section"
@@ -53,7 +58,7 @@ export const Stats = () => {
           </span>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/10">
-          {t.stats.items.map((s, i) => (
+          {items.map((s, i) => (
             <motion.div
               key={i}
               data-testid={`stat-${i}`}

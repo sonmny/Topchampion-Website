@@ -101,6 +101,7 @@ export const adminI18n = {
       cancel: "取消",
     },
     project_detail: {
+      file_cat_photo: "PHOTO",
       back: "← 返回列表",
       drawing_links: "外部图纸链接",
       files_drawing: "图纸",
@@ -154,6 +155,7 @@ export const adminI18n = {
       edit_projects: "编辑项目",
       delete_projects: "删除项目",
       manage_files: "管理文件",
+      view_progress: "查看项目进度",
     },
     users: {
       title: "用户管理",
@@ -261,6 +263,7 @@ export const adminI18n = {
       cancel: "Cancel",
     },
     project_detail: {
+      file_cat_photo: "PHOTO",
       back: "← Back to list",
       drawing_links: "External drawing links",
       files_drawing: "Drawings",
@@ -314,6 +317,7 @@ export const adminI18n = {
       edit_projects: "Edit projects",
       delete_projects: "Delete projects",
       manage_files: "Manage files",
+      view_progress: "View project progress",
     },
     users: {
       title: "Users",

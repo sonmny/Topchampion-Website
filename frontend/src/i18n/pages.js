@@ -8,9 +8,9 @@ export const pages = {
     },
     solutions: {
       "tire-production": {
-        breadcrumb: ["Home", "Solutions", "Tire & Rubber"],
-        title: "Tire & Rubber Production Lines",
-        subtitle: "MES-integrated robotic cells, vision QC, and SCADA orchestration for high-mix, high-volume tire and rubber manufacturing.",
+        breadcrumb: ["Home", "Solutions", "Automation Equipment"],
+        title: "Automation Equipment — Tire & Rubber Production Lines",
+        subtitle: "Tire & rubber production lines, robotic cells, conveyor PLCs and equipment control cabinets for high-mix, high-volume manufacturing.",
         sections: [
           { h: "What we deliver", p: "Tread extrusion lines, compounding (mixing) lines, equipment control cabinets and full PLC + MCC + Block packages — calibrated to your existing line topology. Conveyor PLCs, hot-rebuild stations, weigh & label, full MES/SCADA orchestration." },
           { h: "Who trusts us", p: "Goodyear (USA) — tread + compounding lines · Pirelli — tire conveyor line PLC + control cabinet · Sumitomo Rubber — equipment control cabinet · Cooper Chengshan — tread production PLC + MCC · CST 正新 — equipment control cabinet · Huafeng Rubber — distribution panel." },
@@ -30,9 +30,9 @@ export const pages = {
         bullets: ["ABB MNS-E LV switchgear", "Rittal Ri4Power assemblies", "IEC 61439-1/2 type-tested", "UL 891 / UL 508A · CCC · CE", "Arc-fault containment IEC 61641"],
       },
       "power-generation": {
-        breadcrumb: ["Home", "Solutions", "Power Generation"],
-        title: "Gas / Diesel Gen-Set Control Systems",
-        subtitle: "Generator station control cabinets for gas-fired and diesel power plants — V-POWER Singapore, V-POWER Myanmar, ComAp SE Asia, Trilogy Power (US → Canada).",
+        breadcrumb: ["Home", "Solutions", "Control System Integration"],
+        title: "Control System Hardware Integration",
+        subtitle: "Gas / diesel gen-set control, semiconductor cleanroom PLC + water-treatment, and BoP electrical packages — V-POWER, ComAp, Trilogy Power, TSMC, SMIC.",
         sections: [
           { h: "Scope of supply", p: "Generator set control cabinets, paralleling switchgear, synchronization & load-share controllers, plant-master SCADA, and full BoP (balance-of-plant) electrical packages. From 1 MW single-genset packages to 50 MW multi-unit gas power stations." },
           { h: "Reference projects", p: "V-POWER (Singapore) — gas power station, gen-set control cabinet · V-POWER (Myanmar) — gas power station, gen-set control cabinet · ComAp — gas power stations + diesel generator units across SE Asia · Trilogy Power Solutions Corp (US) — 1 MW NG genset control cabinet, exported to Canada." },
@@ -41,9 +41,9 @@ export const pages = {
         bullets: ["ComAp InteliGen / InteliSys", "Synchronization & paralleling", "1 MW – 50 MW stations", "Black-start sequencing", "Remote SCADA & telemetry"],
       },
       "data-center": {
-        breadcrumb: ["Home", "Solutions", "Semiconductor & Data Center"],
-        title: "Cleanroom & Data Center Distribution",
-        subtitle: "PLC panels, water-treatment, VFD and distribution boards for semiconductor fabs, FPD plants and hyperscale data centers — including TSMC, SMIC, Tianma, CSOT, Huawei, Alibaba and Foxconn.",
+        breadcrumb: ["Home", "Solutions", "Software Development"],
+        title: "Software Development — SCADA · HMI · MES Gateway",
+        subtitle: "SCADA, HMI, and MES gateway software development for tire, semiconductor, data center and gen-set platforms — including TSMC, SMIC, Huawei, Alibaba, Foxconn deployments.",
         sections: [
           { h: "Semiconductor & FPD scope", p: "PLC panels, water-treatment systems, VFD panels, water-washing-machine panels and distribution boards — calibrated for cleanroom EMC and vibration constraints. References include TSMC Shanghai, SMIC (Beijing / Shanghai / Tianjin), Wuhan Hongxin, Tianma (Xiamen / Wuhan), CSOT Shenzhen, UMC Xiamen, HKC (Sichuan / Anhui), Nanya, Royole." },
           { h: "Data center critical power", p: "Mains → UPS interface → IP-rated switchgear → busway → rack PDU. Every link engineered for concurrent maintainability (Tier III) or fault tolerance (Tier IV). Distribution panels delivered to Huawei, Alibaba, Foxconn data rooms." },
@@ -133,9 +133,9 @@ export const pages = {
     },
     solutions: {
       "tire-production": {
-        breadcrumb: ["首页", "解决方案", "轮胎与橡胶"],
-        title: "轮胎与橡胶生产线",
-        subtitle: "MES 集成的机器人单元、视觉质检与 SCADA 调度,专为高混合、高产量的轮胎与橡胶制造而设计。",
+        breadcrumb: ["首页", "解决方案", "自动化设备"],
+        title: "自动化设备 —— 轮胎与橡胶生产线",
+        subtitle: "轮胎与橡胶生产线、机器人单元、输送 PLC 与设备控制柜 —— 专为高混合、高产量制造而设计。",
         sections: [
           { h: "交付内容", p: "胎面挤出线、密炼线、设备控制柜及完整的 PLC + MCC + Block 套件 —— 与您现有产线拓扑校准。输送 PLC、热重建工位、称重贴标、全套 MES/SCADA 调度。" },
           { h: "信赖我们的客户", p: "固铂(美国)—— 胎面 + 密炼线 · 倍耐力 —— 轮胎输送线 PLC + 控制柜 · 住友橡胶 —— 设备控制柜 · 库珀成山 —— 胎面线 PLC + MCC · 正新轮胎 —— 设备控制柜 · 华丰橡胶 —— 配电盘。" },
@@ -155,9 +155,9 @@ export const pages = {
         bullets: ["ABB MNS-E 低压开关柜", "Rittal Ri4Power 总装", "IEC 61439-1/2 型式试验", "UL 891 / UL 508A · CCC · CE", "IEC 61641 弧故障防护"],
       },
       "power-generation": {
-        breadcrumb: ["首页", "解决方案", "电力生产"],
-        title: "燃气/柴油机组控制系统",
-        subtitle: "燃气与柴油发电站机组控制柜 —— V-POWER 新加坡、V-POWER 缅甸、ComAp 东南亚、Trilogy Power(美国 → 加拿大)。",
+        breadcrumb: ["首页", "解决方案", "自控系统硬件集成"],
+        title: "自控系统硬件集成",
+        subtitle: "燃气/柴油机组控制、半导体洁净厂房 PLC + 水处理、电气 BoP 套件 —— 服务 V-POWER、ComAp、Trilogy Power、台积电、中芯等客户。",
         sections: [
           { h: "供货范围", p: "发电机组控制柜、并机开关柜、同步与负载分配控制器、电站主控 SCADA,以及完整的电气 BoP(辅助设备)套件。从 1 MW 单机组到 50 MW 多机组燃气电站。" },
           { h: "参考项目", p: "V-POWER(新加坡)—— 燃气电站机组控制柜 · V-POWER(缅甸)—— 燃气电站机组控制柜 · ComAp —— 东南亚燃气电站与柴油机组 · Trilogy Power Solutions Corp(美国)—— 1 MW NG 燃气机组控制柜,出口加拿大。" },
@@ -166,9 +166,9 @@ export const pages = {
         bullets: ["ComAp InteliGen / InteliSys", "同步与并机控制", "1 MW – 50 MW 电站", "黑启动时序", "远程 SCADA 与遥测"],
       },
       "data-center": {
-        breadcrumb: ["首页", "解决方案", "半导体与数据中心"],
-        title: "洁净厂房与数据中心配电",
-        subtitle: "服务半导体晶圆厂、FPD 工厂与超大规模数据中心的 PLC 柜、水处理、变频器与配电柜 —— 包括台积电、中芯、天马、华星光电、华为、阿里巴巴、富士康。",
+        breadcrumb: ["首页", "解决方案", "软件开发"],
+        title: "软件开发 —— SCADA · HMI · MES 网关",
+        subtitle: "为轮胎、半导体、数据中心、机组平台开发 SCADA、HMI 与 MES 网关软件 —— 包括台积电、中芯、华为、阿里巴巴、富士康等部署。",
         sections: [
           { h: "半导体与 FPD 范围", p: "PLC 柜、水处理系统、变频器盘、水洗机盘与配电盘 —— 针对洁净厂房 EMC 与振动要求校准。参考案例:台积电(上海)、中芯(北京 / 上海 / 天津)、武汉弘芯、天马(厦门 / 武汉)、华星光电(深圳)、联芯(厦门)、惠科(四川 / 安徽)、南亚、柔宇科技。" },
           { h: "数据中心关键电力", p: "进线 → UPS 接口 → IP 等级开关柜 → 母线 → 机架 PDU。按并行可维护性(Tier III)或容错(Tier IV)设计。配电盘已交付华为、阿里巴巴、富士康数据机房。" },

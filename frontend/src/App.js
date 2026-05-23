@@ -12,6 +12,7 @@ import { EngineeringTimeline } from "./components/EngineeringTimeline";
 import { CaseStudies } from "./components/CaseStudies";
 import { SmartQuoteForm } from "./components/SmartQuoteForm";
 import { Clients } from "./components/Clients";
+import { CertsHome } from "./components/CertsHome";
 import { Footer } from "./components/Footer";
 import { Toaster } from "./components/ui/sonner";
 import { SolutionsHub, SolutionDetail } from "./pages/SolutionsPages";
@@ -50,6 +51,7 @@ const Landing = () => (
       <EngineeringTimeline />
       <CaseStudies />
       <Clients />
+      <CertsHome />
       <SmartQuoteForm />
     </main>
     <Footer />

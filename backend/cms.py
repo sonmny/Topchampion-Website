@@ -73,6 +73,17 @@ class ClientGroup(BaseModel):
     updated_at: datetime
 
 
+class Stat(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    value: str              # e.g. "20", "27+", "3,000+"
+    label_en: str
+    label_cn: str
+    order: int = 0
+    enabled: bool = True
+    updated_at: datetime
+
+
 class Partner(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
@@ -289,6 +300,11 @@ def register_cms_routes(api_router: APIRouter, db, upload_dir: Path, require_adm
         "name", "role_en", "role_cn",
     ])
 
+    # ============= STATS =============
+    await_make_crud(cms_router, db, "stats", "site_stats", Stat, require_admin, [
+        "value", "label_en", "label_cn",
+    ])
+
     # ============= CONTACT INFO (singleton) =============
     @cms_router.get("/contact-info", response_model=ContactInfo)
     async def get_contact_info():
@@ -488,6 +504,23 @@ async def seed_cms_defaults(db) -> None:
                 "updated_at": _now().isoformat(),
             }
             for n, re_, rc, o in ps
+        ])
+
+    if await db.site_stats.count_documents({}) == 0:
+        st = [
+            ("20", "Years in Business · since 2005", "年深耕 · 2005 年成立", 1),
+            ("4", "Global Sites & Offices", "全球生产据点 / 办事处", 2),
+            ("27+", "Countries Served", "服务国家", 3),
+            ("3,000+", "Tons Shipped Annually", "年出货量 (吨)", 4),
+        ]
+        await db.site_stats.insert_many([
+            {
+                "id": str(uuid.uuid4()),
+                "value": v, "label_en": le, "label_cn": lc,
+                "order": o, "enabled": True,
+                "updated_at": _now().isoformat(),
+            }
+            for v, le, lc, o in st
         ])
 
     if await db.site_settings.count_documents({"key": "contact_info"}) == 0:

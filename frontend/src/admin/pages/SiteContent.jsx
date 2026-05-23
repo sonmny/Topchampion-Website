@@ -23,6 +23,7 @@ const TABS_CN = {
   "case-studies": "案例研究",
   "client-groups": "客户名单",
   partners: "合作伙伴",
+  stats: "数字见证",
   contact: "联系信息",
 };
 const TABS_EN = {
@@ -30,6 +31,7 @@ const TABS_EN = {
   "case-studies": "Case Studies",
   "client-groups": "Client Groups",
   partners: "Partners",
+  stats: "Stats",
   contact: "Contact Info",
 };
 
@@ -38,6 +40,7 @@ const TAB_ICONS = {
   "case-studies": Quote,
   "client-groups": UsersIcon,
   partners: Handshake,
+  stats: Award,
   contact: MapPin,
 };
 
@@ -90,6 +93,7 @@ export const SiteContentAdmin = () => {
       {active === "case-studies" && <CaseStudiesTab />}
       {active === "client-groups" && <ClientGroupsTab />}
       {active === "partners" && <PartnersTab />}
+      {active === "stats" && <StatsTab />}
       {active === "contact" && <ContactInfoTab />}
       </div>
     </AdminLayout>
@@ -665,6 +669,97 @@ const PartnerEditor = ({ item, onClose, onSaved }) => {
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/10">
           <GhostBtn onClick={onClose} testId="partner-cancel">{lang === "cn" ? "取消" : "Cancel"}</GhostBtn>
           <PrimaryBtn onClick={save} disabled={saving} testId="partner-save"><Save size={14} /> {saving ? "…" : (lang === "cn" ? "保存" : "Save")}</PrimaryBtn>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// -------------------- Stats --------------------
+const StatsTab = () => {
+  const { lang } = useLang();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    try { const { data } = await api.get("/site/stats/admin"); setItems(data); }
+    catch (err) { toast.error(formatApiError(err)); } finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, []);
+
+  const remove = async (id) => {
+    if (!window.confirm(lang === "cn" ? "确认删除？" : "Delete?")) return;
+    try { await api.delete(`/site/stats/${id}`); load(); } catch (err) { toast.error(formatApiError(err)); }
+  };
+  const toggle = async (it) => {
+    try { await api.patch(`/site/stats/${it.id}`, { enabled: !it.enabled }); load(); } catch (err) { toast.error(formatApiError(err)); }
+  };
+
+  return (
+    <>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-sm text-zinc-400">{loading ? "…" : `${items.length} ${lang === "cn" ? "项" : "items"}`}</div>
+        <PrimaryBtn onClick={() => setEditing({})} testId="stat-new-btn"><Plus size={15} /> {lang === "cn" ? "新增数字" : "New stat"}</PrimaryBtn>
+      </div>
+      <Section>
+        {items.map((it, i) => (
+          <div key={it.id} className={`flex items-center gap-6 p-5 ${i !== items.length - 1 ? "border-b border-white/5" : ""} ${!it.enabled ? "opacity-60" : ""}`} data-testid={`stat-row-${it.id}`}>
+            <div className="font-heading text-4xl font-bold text-[#C9A063] tracking-tighter min-w-[100px]">{it.value}</div>
+            <div className="flex-1 min-w-0">
+              <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-zinc-500 mb-1">{String(it.order || 0).padStart(2, "0")}</div>
+              <div className="text-sm text-white">{lang === "cn" ? it.label_cn : it.label_en}</div>
+              <div className="text-[11px] text-zinc-500 mt-0.5">{lang === "cn" ? it.label_en : it.label_cn}</div>
+            </div>
+            <RowToolbar enabled={it.enabled} onToggle={() => toggle(it)} onEdit={() => setEditing(it)} onDelete={() => remove(it.id)} testIdBase={`stat-${it.id}`} />
+          </div>
+        ))}
+        {!loading && items.length === 0 && <div className="p-10 text-center text-zinc-500 text-sm">{lang === "cn" ? "暂无数据" : "No stats"}</div>}
+      </Section>
+      {editing && <StatEditor item={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+    </>
+  );
+};
+
+const StatEditor = ({ item, onClose, onSaved }) => {
+  const { lang } = useLang();
+  const isNew = !item.id;
+  const [form, setForm] = useState({
+    value: item.value || "", label_en: item.label_en || "", label_cn: item.label_cn || "",
+    order: item.order ?? 0, enabled: item.enabled !== false,
+  });
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (isNew) await api.post("/site/stats", form);
+      else await api.patch(`/site/stats/${item.id}`, form);
+      toast.success(lang === "cn" ? "已保存" : "Saved"); onSaved();
+    } catch (err) { toast.error(formatApiError(err)); } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-xl" data-testid="stat-editor">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+          <h3 className="font-heading text-lg font-bold">{isNew ? (lang === "cn" ? "新增数字" : "New stat") : (lang === "cn" ? "编辑数字" : "Edit stat")}</h3>
+          <button onClick={onClose} className="text-zinc-400 hover:text-white" data-testid="stat-editor-close"><X size={18} /></button>
+        </div>
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <TextField label={lang === "cn" ? "数值 (如 20 · 27+ · 3,000+)" : "Value (e.g. 20 · 27+ · 3,000+)"} value={form.value} onChange={(v) => setForm({ ...form, value: v })} testId="stat-f-value" placeholder="3,000+" />
+          <TextField label="Order" value={form.order} onChange={(v) => setForm({ ...form, order: parseInt(v) || 0 })} testId="stat-f-order" />
+          <TextField label="Label (EN)" value={form.label_en} onChange={(v) => setForm({ ...form, label_en: v })} testId="stat-f-label-en" placeholder="Tons Shipped Annually" />
+          <TextField label="标签 (中文)" value={form.label_cn} onChange={(v) => setForm({ ...form, label_cn: v })} testId="stat-f-label-cn" placeholder="年出货量 (吨)" />
+          <label className="sm:col-span-2 flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+            <input type="checkbox" checked={form.enabled} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} data-testid="stat-f-enabled" className="w-4 h-4 accent-[#0F6B3F]" />
+            {lang === "cn" ? "在网站上显示" : "Visible"}
+          </label>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/10">
+          <GhostBtn onClick={onClose} testId="stat-cancel">{lang === "cn" ? "取消" : "Cancel"}</GhostBtn>
+          <PrimaryBtn onClick={save} disabled={saving} testId="stat-save"><Save size={14} /> {saving ? "…" : (lang === "cn" ? "保存" : "Save")}</PrimaryBtn>
         </div>
       </div>
     </div>
