@@ -47,7 +47,36 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
 - Admin pages at `/admin`: Login, Dashboard, Projects list/detail/form, Users (admin-only)
 - 24/24 backend + frontend admin tests pass (iteration_3)
 
-## Phase 7 (2026-02) — 真实资料整合 + 邮件管道
+## Phase 8 (2026-02) — 通用 CMS 内容管理模块
+- **新增后端**:`/app/backend/cms.py` 完整 CMS 路由,集成到 `register_cms_routes()`
+- **公开只读端点**(任何人访问公开页面时调用):
+  - `GET /api/site/certifications` · `GET /api/site/case-studies` · `GET /api/site/client-groups` · `GET /api/site/partners` · `GET /api/site/contact-info`
+  - `GET /api/site/certifications/{id}/image`(认证证书图片流)
+- **管理员端点**(admin 角色):
+  - `GET /api/site/{type}/admin`(包含已禁用的项)
+  - `POST/PATCH/DELETE /api/site/certifications/{id}`(multipart,支持图片上传 .jpg/.png/.pdf/.webp)
+  - `POST/PATCH/DELETE /api/site/case-studies/{id}`(JSON)
+  - `POST/PATCH/DELETE /api/site/client-groups/{id}`(JSON,items 为字符串数组)
+  - `POST/PATCH/DELETE /api/site/partners/{id}`(JSON)
+  - `PUT /api/site/contact-info`(单例 upsert)
+- **MongoDB 集合**:`site_certifications`、`site_case_studies`、`site_client_groups`、`site_partners`、`site_settings`(联系信息单例 key=contact_info)
+- **首次启动种子**:`seed_cms_defaults()` 幂等地为空集合写入真实数据(6 张证书、3 条案例、6 个客户组、6 个合作伙伴、完整联系信息)
+- **新增前端管理页**:`/admin/cms` (admin only):
+  - 单页 5 个 tab:认证证书 / 案例研究 / 客户名单 / 合作伙伴 / 联系信息
+  - 每个 tab 含 列表 + 新增 + 编辑(模态)+ 启用/禁用 + 删除 + 排序字段
+  - 认证证书 tab 支持图片上传 + 预览缩略图
+  - 双语字段并排编辑(EN + 中文)
+  - 联系信息为单例编辑表单
+  - 侧边栏添加 "站点内容" 导航项(FileEdit 图标)
+- **新增前端 hook**:`/app/frontend/src/hooks/useSiteContent.js` 公开页轻量级读取 + 优雅回退到 i18n 静态字典
+- **前端公开页消费 CMS 数据**:
+  - `Clients.jsx` → CMS client-groups
+  - `CaseStudies.jsx` → 优先级 1)Live Projects showcase 2)CMS case-studies 3)静态 i18n
+  - `TrustBar.jsx` → CMS partners
+  - `Footer.jsx` → CMS contact-info(地址、电话、销售邮箱)
+  - `Certifications` 页 → CMS certifications(支持上传图片,自动渲染到 gallery)
+- **验证**:6 个公开 GET 端点 200、admin POST/PATCH/DELETE 全 OK、Live 修改 contact-info 电话→刷新首页→Footer 立即同步显示新电话→恢复
+
 - **真实图片**：从官方 PPTX 提取并优化(Pillow 压缩 + 转 JPG):
   - 证书:ISO 9001 中英双版(`/assets/certs/iso9001-{cn,en}.jpg`),按当前语言渲染
   - 产品:出货 MCC 柜体、NANYA 车间柜体行、PLC+HMI 控制柜、Schneider 开关柜(`/assets/products/*.jpg`)

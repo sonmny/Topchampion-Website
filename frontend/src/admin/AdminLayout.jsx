@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, Users, LogOut, Globe, UserCircle, Inbox } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Users, LogOut, Globe, UserCircle, Inbox, FileEdit } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { useLang } from "../i18n/LangContext";
 import { adminI18n } from "../i18n/admin";
@@ -20,6 +20,7 @@ export const AdminLayout = ({ children }) => {
     links.push({ to: "/admin/leads", label: t.nav.leads || "客户咨询", icon: Inbox });
   }
   if (user?.role === "admin") {
+    links.push({ to: "/admin/cms", label: t.nav.site_content || (lang === "cn" ? "站点内容" : "Site Content"), icon: FileEdit });
     links.push({ to: "/admin/users", label: t.nav.users, icon: Users });
   }
   links.push({ to: "/admin/profile", label: t.nav.profile, icon: UserCircle });

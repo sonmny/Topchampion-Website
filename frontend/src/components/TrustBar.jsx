@@ -1,9 +1,13 @@
 import React from "react";
 import { useLang } from "../i18n/LangContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 export const TrustBar = () => {
-  const { t } = useLang();
-  const partners = t.trust.partners;
+  const { t, lang } = useLang();
+  const { data: cmsPartners } = useSiteContent("partners");
+  const partners = Array.isArray(cmsPartners) && cmsPartners.length > 0
+    ? cmsPartners.map((p) => ({ name: p.name, role: lang === "cn" ? p.role_cn : p.role_en }))
+    : t.trust.partners;
   const loop = [...partners, ...partners];
 
   return (

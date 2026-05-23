@@ -33,6 +33,7 @@ import { ProjectForm } from "./admin/pages/ProjectForm";
 import { UsersList } from "./admin/pages/UsersList";
 import { AdminProfile } from "./admin/pages/AdminProfile";
 import { LeadsList, LeadDetail } from "./admin/pages/LeadsAdmin";
+import { SiteContentAdmin } from "./admin/pages/SiteContent";
 import { HelmetProvider } from "react-helmet-async";
 import { SEO } from "./seo/SEO";
 import { organizationSchema, websiteSchema } from "./seo/seoConfig";
@@ -90,6 +91,7 @@ function App() {
             <Route path="/admin/profile" element={<ProtectedRoute><AdminProfile /></ProtectedRoute>} />
             <Route path="/admin/leads" element={<ProtectedRoute><LeadsList /></ProtectedRoute>} />
             <Route path="/admin/leads/:id" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
+            <Route path="/admin/cms" element={<ProtectedRoute allowed={["admin"]}><SiteContentAdmin /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFoundPage />} />
             </Routes>

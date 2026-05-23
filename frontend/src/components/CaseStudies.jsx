@@ -3,13 +3,15 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { useLang } from "../i18n/LangContext";
 import { Quote } from "lucide-react";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export const CaseStudies = () => {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [liveCases, setLiveCases] = useState(null); // null = loading, [] = none, [...] = live
+  const { data: cmsCases } = useSiteContent("case-studies");
 
   useEffect(() => {
     let alive = true;
@@ -24,16 +26,25 @@ export const CaseStudies = () => {
     };
   }, []);
 
-  // Build display list: live cases first, fallback to static if none
-  const items =
-    liveCases && liveCases.length > 0
-      ? liveCases.map((c) => ({
-          industry: c.showcase_industry || c.name,
-          quote: c.showcase_quote || "",
-          author: c.showcase_author || "",
-          metric: c.showcase_metric || "",
-        }))
-      : t.cases.items;
+  // Display priority: 1) live projects from admin showcase 2) CMS case-studies 3) static i18n fallback
+  let items;
+  if (liveCases && liveCases.length > 0) {
+    items = liveCases.map((c) => ({
+      industry: c.showcase_industry || c.name,
+      quote: c.showcase_quote || "",
+      author: c.showcase_author || "",
+      metric: c.showcase_metric || "",
+    }));
+  } else if (Array.isArray(cmsCases) && cmsCases.length > 0) {
+    items = cmsCases.map((c) => ({
+      industry: lang === "cn" ? c.industry_cn : c.industry_en,
+      quote: lang === "cn" ? c.quote_cn : c.quote_en,
+      author: lang === "cn" ? c.author_cn : c.author_en,
+      metric: lang === "cn" ? c.metric_cn : c.metric_en,
+    }));
+  } else {
+    items = t.cases.items;
+  }
 
   return (
     <section

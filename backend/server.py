@@ -27,6 +27,7 @@ except Exception:
     PIL_AVAILABLE = False
 
 from notifications import send_new_lead_email
+from cms import register_cms_routes, seed_cms_defaults
 
 
 # ---------------- Config ----------------
@@ -256,6 +257,8 @@ async def _scoped_project_filter(current: dict) -> dict:
 async def on_startup():
     await db.users.create_index("username", unique=True)
     await db.projects.create_index("created_at")
+    # Seed CMS defaults (idempotent)
+    await seed_cms_defaults(db)
     # Seed admin
     existing = await db.users.find_one({"username": ADMIN_USERNAME})
     if existing is None:
@@ -778,6 +781,10 @@ async def update_me(payload: SelfProfileUpdate, current=Depends(get_current_user
         await db.users.update_one({"id": current["id"]}, {"$set": upd})
     fresh = await db.users.find_one({"id": current["id"]}, {"_id": 0, "password_hash": 0})
     return _serialize(fresh)
+
+
+# ---------------- CMS routes ----------------
+register_cms_routes(api_router, db, UPLOAD_DIR, require_admin)
 
 
 # ---------------- Mount + CORS ----------------

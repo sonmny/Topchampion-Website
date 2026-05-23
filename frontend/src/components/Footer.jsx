@@ -1,10 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useLang } from "../i18n/LangContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import { Linkedin, Twitter, Youtube, Github, MapPin, Mail, Phone } from "lucide-react";
 
 export const Footer = () => {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const { data: contact } = useSiteContent("contact-info");
+
+  const address = contact ? (lang === "cn" ? contact.address_cn : contact.address_en) || t.footer.address : t.footer.address;
+  const phone = (contact && contact.phone) || "+86 512 5790 0000";
+  const emailSales = (contact && contact.email_sales) || "sales@topchampion.cn";
 
   const solutionLinks = [
     { label: t.footer.links.solutions[0], to: "/solutions/tire-production" },
@@ -60,17 +66,17 @@ export const Footer = () => {
             <div className="flex flex-col gap-2 mt-3 text-sm text-zinc-400">
               <div className="flex items-center gap-3">
                 <MapPin size={14} className="text-[#C9A063]" />
-                <span>{t.footer.address}</span>
+                <span>{address}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail size={14} className="text-[#C9A063]" />
-                <a href="mailto:sales@topchampion.cn" className="hover:text-white transition-colors">
-                  sales@topchampion.cn
+                <a href={`mailto:${emailSales}`} className="hover:text-white transition-colors">
+                  {emailSales}
                 </a>
               </div>
               <div className="flex items-center gap-3">
                 <Phone size={14} className="text-[#C9A063]" />
-                <span>+86 512 5790 0000</span>
+                <span>{phone}</span>
               </div>
             </div>
           </div>

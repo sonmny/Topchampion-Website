@@ -1,10 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useLang } from "../i18n/LangContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 // Real customer roster sourced from Topchampion 2025 catalog.
 // Displayed as text-only badges (no third-party logos shown).
-const ROSTER = {
+const FALLBACK_ROSTER = {
   cn: {
     overline: "服务客户",
     title: "20 年,服务全球工业头部客户。",
@@ -71,7 +72,13 @@ const ROSTER = {
 
 export const Clients = () => {
   const { lang } = useLang();
-  const c = ROSTER[lang];
+  const c = FALLBACK_ROSTER[lang];
+  const { data: serverGroups } = useSiteContent("client-groups");
+
+  // Build groups array: prefer server data when present, otherwise fallback.
+  const groups = (Array.isArray(serverGroups) && serverGroups.length > 0)
+    ? serverGroups.map((g) => ({ label: lang === "cn" ? g.label_cn : g.label_en, items: g.items || [] }))
+    : c.groups;
 
   return (
     <section
@@ -94,7 +101,7 @@ export const Clients = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10 border border-white/10">
-          {c.groups.map((g, i) => (
+          {groups.map((g, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 14 }}

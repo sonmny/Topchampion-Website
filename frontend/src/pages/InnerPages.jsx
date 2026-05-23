@@ -8,6 +8,9 @@ import { SmartQuoteForm } from "../components/SmartQuoteForm";
 import { useLang } from "../i18n/LangContext";
 import { pages as P } from "../i18n/pages";
 import { SEO } from "../seo/SEO";
+import { useSiteContent } from "../hooks/useSiteContent";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const EngineeringPage = () => {
   const { lang } = useLang();
@@ -151,7 +154,28 @@ export const CertificationsPage = () => {
   const { lang } = useLang();
   const p = P[lang].certifications;
   const [zoomed, setZoomed] = React.useState(null);
-  const certImg = lang === "cn" ? "/assets/certs/iso9001-cn.jpg" : "/assets/certs/iso9001-en.jpg";
+  const { data: cmsCerts } = useSiteContent("certifications");
+
+  // Build the cert list: prefer CMS, fallback to static i18n
+  const certList = Array.isArray(cmsCerts) && cmsCerts.length > 0
+    ? cmsCerts.map((c) => ({
+        k: c.code,
+        t: lang === "cn" ? c.title_cn : c.title_en,
+        d: lang === "cn" ? c.description_cn : c.description_en,
+      }))
+    : p.items;
+
+  // Pick image-bearing certs for the gallery (first 2 from CMS that have images)
+  const cmsCertsWithImage = Array.isArray(cmsCerts) ? cmsCerts.filter((c) => c.image_url) : [];
+  const certImgFallback = lang === "cn" ? "/assets/certs/iso9001-cn.jpg" : "/assets/certs/iso9001-en.jpg";
+  // first cert image: prefer CMS uploaded image, else static fallback
+  const firstCertImg = cmsCertsWithImage[0]
+    ? `${BACKEND_URL}${cmsCertsWithImage[0].image_url}`
+    : certImgFallback;
+  const firstCertCode = cmsCertsWithImage[0] ? cmsCertsWithImage[0].code : "ISO 9001:2015";
+  const firstCertTitle = cmsCertsWithImage[0]
+    ? (lang === "cn" ? cmsCertsWithImage[0].title_cn : cmsCertsWithImage[0].title_en)
+    : (lang === "cn" ? "质量管理体系认证 · CQC 签发" : "Quality Management System · CQC");
   return (
     <PageShell>
       <SEO pageKey="certifications" path="/certifications" />
@@ -165,23 +189,21 @@ export const CertificationsPage = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/10 border border-white/10">
             <button
-              onClick={() => setZoomed(certImg)}
+              onClick={() => setZoomed(firstCertImg)}
               data-testid="cert-img-iso"
               className="bg-[#0A0A0A] p-6 flex flex-col gap-4 hover:bg-[#101010] transition-colors text-left group"
             >
               <div className="aspect-[1/1.4] bg-white/5 overflow-hidden">
                 <img
-                  src={certImg}
-                  alt="ISO 9001 Certificate"
+                  src={firstCertImg}
+                  alt={firstCertCode}
                   loading="lazy"
                   className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-500"
                 />
               </div>
               <div>
-                <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] mb-1">ISO 9001:2015</div>
-                <div className="text-sm text-zinc-300">
-                  {lang === "cn" ? "质量管理体系认证 · CQC 签发" : "Quality Management System · CQC"}
-                </div>
+                <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] mb-1">{firstCertCode}</div>
+                <div className="text-sm text-zinc-300">{firstCertTitle}</div>
               </div>
             </button>
             <div className="bg-[#0A0A0A] p-6 flex flex-col gap-4">
@@ -224,9 +246,9 @@ export const CertificationsPage = () => {
 
       <section className="bg-[#0A0A0A] py-20 lg:py-24">
         <div className="max-w-[1100px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10">
-          {p.items.map((it, i) => (
+          {certList.map((it, i) => (
             <motion.div
-              key={i}
+              key={it.k || i}
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
