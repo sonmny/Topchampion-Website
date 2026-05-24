@@ -4,34 +4,43 @@ import { useLang } from "../i18n/LangContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 
 const AnimatedValue = ({ value }) => {
-  // Animates trailing number; preserves prefix/suffix like "+", "MW", "%"
-  const match = value.match(/^([^\d]*)(\d+\.?\d*)(.*)$/);
+  // Parse: optional prefix → numeric body (commas allowed) → optional suffix ("+", "MW", "%" etc.)
+  const str = String(value || "");
+  const match = str.match(/^([^\d]*)([\d,]+\.?\d*)(.*)$/);
+  const targetStr = match ? match[2].replace(/,/g, "") : "0";
+  const target = parseFloat(targetStr) || 0;
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
-  const [display, setDisplay] = useState(match ? "0" : value);
+  const [display, setDisplay] = useState("0");
 
   useEffect(() => {
     if (!match || !inView) return;
-    const target = parseFloat(match[2]);
     const dur = 1400;
     const start = performance.now();
     let raf;
+    const fmt = (n) => {
+      const whole = target % 1 === 0;
+      const numStr = whole ? Math.round(n).toString() : n.toFixed(2);
+      // Re-insert thousands separators if the original had them
+      return match[2].includes(",")
+        ? numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        : numStr;
+    };
     const tick = (now) => {
       const p = Math.min(1, (now - start) / dur);
       const eased = 1 - Math.pow(1 - p, 3);
-      const curr = target * eased;
-      setDisplay(
-        target % 1 === 0 ? Math.round(curr).toString() : curr.toFixed(2)
-      );
+      setDisplay(fmt(target * eased));
       if (p < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [inView, match]);
+    // Re-run only when the actual target value or view state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inView, target]);
 
   if (!match) return <span>{value}</span>;
   return (
-    <span ref={ref}>
+    <span ref={ref} data-testid="stat-value-animated">
       {match[1]}
       {display}
       {match[3]}
