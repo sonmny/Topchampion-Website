@@ -84,6 +84,18 @@ class Stat(BaseModel):
     updated_at: datetime
 
 
+class EngineeringImage(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    image_url: str           # /api/site/engineering-images/{id}/image
+    image_ext: str           # .jpg/.png/.webp
+    caption_en: str = ""
+    caption_cn: str = ""
+    order: int = 0
+    enabled: bool = True
+    updated_at: datetime
+
+
 class Partner(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
@@ -304,6 +316,110 @@ def register_cms_routes(api_router: APIRouter, db, upload_dir: Path, require_adm
     await_make_crud(cms_router, db, "stats", "site_stats", Stat, require_admin, [
         "value", "label_en", "label_cn",
     ])
+
+    # ============= ENGINEERING IMAGES (with image upload, like certifications) =============
+    ALLOWED_ENG_EXT = {".jpg", ".jpeg", ".png", ".webp"}
+
+    @cms_router.get("/engineering-images", response_model=List[EngineeringImage])
+    async def list_engineering_images():
+        cur = db.site_engineering_images.find({"enabled": True}, {"_id": 0}).sort("order", 1)
+        return [_clean(d) async for d in cur]
+
+    @cms_router.get("/engineering-images/admin", response_model=List[EngineeringImage])
+    async def list_engineering_images_admin(_: dict = Depends(require_admin)):
+        cur = db.site_engineering_images.find({}, {"_id": 0}).sort("order", 1)
+        return [_clean(d) async for d in cur]
+
+    @cms_router.post("/engineering-images", response_model=EngineeringImage, status_code=201)
+    async def create_engineering_image(
+        caption_en: str = Form(""),
+        caption_cn: str = Form(""),
+        order: int = Form(0),
+        enabled: bool = Form(True),
+        image: UploadFile = File(...),
+        _: dict = Depends(require_admin),
+    ):
+        if not image or not image.filename:
+            raise HTTPException(status_code=422, detail="image file required")
+        suffix = Path(image.filename).suffix.lower()
+        if suffix not in ALLOWED_ENG_EXT:
+            raise HTTPException(status_code=415, detail=f"Unsupported file type {suffix}")
+        data = await image.read()
+        item_id = str(uuid.uuid4())
+        disk_path = upload_dir / f"eng_{item_id}{suffix}"
+        with open(disk_path, "wb") as fh:
+            fh.write(data)
+        doc = {
+            "id": item_id,
+            "image_url": f"/api/site/engineering-images/{item_id}/image",
+            "image_ext": suffix,
+            "caption_en": caption_en.strip(),
+            "caption_cn": caption_cn.strip(),
+            "order": order,
+            "enabled": enabled,
+            "updated_at": _now().isoformat(),
+        }
+        await db.site_engineering_images.insert_one(dict(doc))
+        return _clean(doc)
+
+    @cms_router.patch("/engineering-images/{eid}", response_model=EngineeringImage)
+    async def update_engineering_image(
+        eid: str,
+        caption_en: Optional[str] = Form(None),
+        caption_cn: Optional[str] = Form(None),
+        order: Optional[int] = Form(None),
+        enabled: Optional[bool] = Form(None),
+        image: Optional[UploadFile] = File(None),
+        _: dict = Depends(require_admin),
+    ):
+        existing = await db.site_engineering_images.find_one({"id": eid}, {"_id": 0})
+        if not existing:
+            raise HTTPException(status_code=404, detail="Not found")
+        updates = {}
+        for k, v in {"caption_en": caption_en, "caption_cn": caption_cn, "order": order, "enabled": enabled}.items():
+            if v is not None:
+                updates[k] = v.strip() if isinstance(v, str) else v
+        if image is not None and image.filename:
+            suffix = Path(image.filename).suffix.lower()
+            if suffix not in ALLOWED_ENG_EXT:
+                raise HTTPException(status_code=415, detail=f"Unsupported file type {suffix}")
+            data = await image.read()
+            old_ext = existing.get("image_ext")
+            if old_ext and old_ext != suffix:
+                old = upload_dir / f"eng_{eid}{old_ext}"
+                if old.exists():
+                    old.unlink()
+            disk_path = upload_dir / f"eng_{eid}{suffix}"
+            with open(disk_path, "wb") as fh:
+                fh.write(data)
+            updates["image_ext"] = suffix
+            updates["image_url"] = f"/api/site/engineering-images/{eid}/image"
+        updates["updated_at"] = _now().isoformat()
+        await db.site_engineering_images.update_one({"id": eid}, {"$set": updates})
+        fresh = await db.site_engineering_images.find_one({"id": eid}, {"_id": 0})
+        return _clean(fresh)
+
+    @cms_router.delete("/engineering-images/{eid}", status_code=204)
+    async def delete_engineering_image(eid: str, _: dict = Depends(require_admin)):
+        existing = await db.site_engineering_images.find_one({"id": eid}, {"_id": 0})
+        if not existing:
+            raise HTTPException(status_code=404, detail="Not found")
+        if existing.get("image_ext"):
+            f = upload_dir / f"eng_{eid}{existing['image_ext']}"
+            if f.exists():
+                f.unlink()
+        await db.site_engineering_images.delete_one({"id": eid})
+
+    @cms_router.get("/engineering-images/{eid}/image")
+    async def stream_engineering_image(eid: str):
+        doc = await db.site_engineering_images.find_one({"id": eid}, {"_id": 0})
+        if not doc or not doc.get("image_ext"):
+            raise HTTPException(status_code=404, detail="Image not found")
+        path = upload_dir / f"eng_{eid}{doc['image_ext']}"
+        if not path.exists():
+            raise HTTPException(status_code=404, detail="Image missing on disk")
+        media = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        return FileResponse(str(path), media_type=media)
 
     # ============= CONTACT INFO (singleton) =============
     @cms_router.get("/contact-info", response_model=ContactInfo)

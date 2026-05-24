@@ -586,7 +586,7 @@ const FileCard = ({ file, category, isAdmin, onDelete, onDownload, onRename, t }
           <FallbackIcon size={42} className="text-zinc-700" strokeWidth={1.5} />
         )}
         <span className="absolute top-2 left-2 font-mono text-[9px] tracking-[0.2em] uppercase bg-black/70 backdrop-blur-sm px-2 py-1 text-[#C9A063] border border-[#C9A063]/30">
-          {category === "code" ? t.project_detail.file_cat_code : t.project_detail.file_cat_drawing}
+          {category === "code" ? t.project_detail.file_cat_code : category === "photo" ? (t.project_detail.file_cat_photo || (t.common && t.common.photo) || "PHOTO") : t.project_detail.file_cat_drawing}
         </span>
       </div>
 
@@ -618,6 +618,17 @@ const FileCard = ({ file, category, isAdmin, onDelete, onDownload, onRename, t }
         <div className="text-[11px] font-mono text-zinc-500 truncate">
           {file.filename} · {(file.size / 1024).toFixed(1)} KB
         </div>
+        {(file.uploaded_by_name || file.uploaded_at) && (
+          <div className="text-[11px] text-zinc-500 truncate" data-testid={`uploader-${file.id}`}>
+            {file.uploaded_by_name && (
+              <span className="text-zinc-400">{file.uploaded_by_name}</span>
+            )}
+            {file.uploaded_by_name && file.uploaded_at && <span className="mx-1.5 text-zinc-700">·</span>}
+            {file.uploaded_at && (
+              <span>{new Date(file.uploaded_at).toLocaleDateString()}</span>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-2 mt-auto pt-2">
           <button

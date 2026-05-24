@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PageShell, PageHero, CTABlock } from "../components/PageShell";
 import { EngineeringTimeline } from "../components/EngineeringTimeline";
+import { EngineeringCarousel } from "../components/EngineeringCarousel";
 import { CaseStudies } from "../components/CaseStudies";
 import { SmartQuoteForm } from "../components/SmartQuoteForm";
 import { useLang } from "../i18n/LangContext";
@@ -20,6 +21,7 @@ export const EngineeringPage = () => {
       <SEO pageKey="engineering" path="/engineering" />
       <PageHero {...p} />
       <EngineeringTimeline />
+      <EngineeringCarousel />
       <CTABlock />
     </PageShell>
   );
@@ -156,82 +158,78 @@ export const CertificationsPage = () => {
   const [zoomed, setZoomed] = React.useState(null);
   const { data: cmsCerts } = useSiteContent("certifications");
 
-  // Build the cert list: prefer CMS, fallback to static i18n
-  const certList = Array.isArray(cmsCerts) && cmsCerts.length > 0
-    ? cmsCerts.map((c) => ({
-        k: c.code,
-        t: lang === "cn" ? c.title_cn : c.title_en,
-        d: lang === "cn" ? c.description_cn : c.description_en,
-      }))
-    : p.items;
+  // Use CMS certs as the authoritative source. Falls back to i18n only if CMS is empty.
+  const cmsList = Array.isArray(cmsCerts) ? cmsCerts : [];
+  const useCMS = cmsList.length > 0;
 
-  // Pick image-bearing certs for the gallery (first 2 from CMS that have images)
-  const cmsCertsWithImage = Array.isArray(cmsCerts) ? cmsCerts.filter((c) => c.image_url) : [];
-  const certImgFallback = lang === "cn" ? "/assets/certs/iso9001-cn.jpg" : "/assets/certs/iso9001-en.jpg";
-  // first cert image: prefer CMS uploaded image, else static fallback
-  const firstCertImg = cmsCertsWithImage[0]
-    ? `${BACKEND_URL}${cmsCertsWithImage[0].image_url}`
-    : certImgFallback;
-  const firstCertCode = cmsCertsWithImage[0] ? cmsCertsWithImage[0].code : "ISO 9001:2015";
-  const firstCertTitle = cmsCertsWithImage[0]
-    ? (lang === "cn" ? cmsCertsWithImage[0].title_cn : cmsCertsWithImage[0].title_en)
-    : (lang === "cn" ? "质量管理体系认证 · CQC 签发" : "Quality Management System · CQC");
   return (
     <PageShell>
       <SEO pageKey="certifications" path="/certifications" />
       <PageHero breadcrumb={p.breadcrumb} title={p.title} subtitle={p.subtitle} />
 
-      {/* Real cert thumbnails */}
-      <section className="bg-[#070707] py-16 lg:py-20 border-t border-white/5" data-testid="certs-gallery">
-        <div className="max-w-[1100px] mx-auto px-6 md:px-12">
-          <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-8">
-            {lang === "cn" ? "证书原件" : "Certificate originals"}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/10 border border-white/10">
-            <button
-              onClick={() => setZoomed(firstCertImg)}
-              data-testid="cert-img-iso"
-              className="bg-[#0A0A0A] p-6 flex flex-col gap-4 hover:bg-[#101010] transition-colors text-left group"
-            >
-              <div className="aspect-[1/1.4] bg-white/5 overflow-hidden">
-                <img
-                  src={firstCertImg}
-                  alt={firstCertCode}
-                  loading="lazy"
-                  className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-500"
-                />
-              </div>
-              <div>
-                <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] mb-1">{firstCertCode}</div>
-                <div className="text-sm text-zinc-300">{firstCertTitle}</div>
-              </div>
-            </button>
-            <div className="bg-[#0A0A0A] p-6 flex flex-col gap-4">
-              <div className="aspect-[1/1.4] bg-gradient-to-br from-[#0F6B3F]/15 to-[#0A0A0A] border border-[#0F6B3F]/20 flex flex-col items-center justify-center gap-4 text-center p-6">
-                <div className="font-heading text-3xl lg:text-4xl font-bold text-[#C9A063] tracking-tight">
-                  GR202432006352
-                </div>
-                <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-zinc-400">
-                  {lang === "cn" ? "证书编号" : "Certificate No."}
-                </div>
-                <div className="text-xs text-zinc-400 leading-relaxed max-w-[260px]">
-                  {lang === "cn"
-                    ? "江苏省科学技术厅、财政厅、税务局共同认定 · 2024 年 11 月 19 日颁发 · 有效期三年"
-                    : "Jointly issued by Jiangsu Provincial Department of Science & Technology, Finance, and Taxation · Nov 19, 2024 · valid 3 years"}
-                </div>
-              </div>
-              <div>
-                <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] mb-1">
-                  {lang === "cn" ? "国家高新技术企业" : "National High-Tech Enterprise"}
-                </div>
-                <div className="text-sm text-zinc-300">
-                  {lang === "cn" ? "2024 年获颁 · 苏州赛冠工业自动化技术有限公司" : "Awarded 2024 · Suzhou Topchampion Industrial Automation Technology Co., Ltd."}
-                </div>
-              </div>
+      {/* Unified certification gallery — every CMS cert rendered, in admin-defined order.
+          Cards have identical dimensions; image fills visual area when present, otherwise the
+          same area carries the cert code + description text. */}
+      {useCMS && (
+        <section className="bg-[#070707] py-16 lg:py-20 border-t border-white/5" data-testid="certs-gallery">
+          <div className="max-w-[1200px] mx-auto px-6 md:px-12">
+            <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-8">
+              {lang === "cn" ? "证书与认证" : "Certifications"}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10 border border-white/10">
+              {cmsList.map((c) => {
+                const title = lang === "cn" ? c.title_cn : c.title_en;
+                const desc = lang === "cn" ? c.description_cn : c.description_en;
+                const imgSrc = c.image_url ? `${BACKEND_URL}${c.image_url}` : null;
+                return (
+                  <div
+                    key={c.id}
+                    data-testid={`cert-card-${c.id}`}
+                    className="bg-[#0A0A0A] flex flex-col"
+                  >
+                    {/* Visual area — image OR typographic fallback at identical size */}
+                    <button
+                      onClick={() => imgSrc && setZoomed(imgSrc)}
+                      type="button"
+                      className={`aspect-[1/1.25] bg-white/[0.02] overflow-hidden relative flex items-center justify-center p-6 group ${imgSrc ? "cursor-zoom-in hover:bg-white/[0.04]" : "cursor-default"} transition-colors`}
+                      data-testid={`cert-img-btn-${c.id}`}
+                    >
+                      {imgSrc ? (
+                        <img
+                          src={imgSrc}
+                          alt={c.code}
+                          loading="lazy"
+                          className="max-w-full max-h-full object-contain group-hover:scale-[1.02] transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-center gap-4 px-2">
+                          <div className="w-14 h-14 border border-[#C9A063]/40 rounded-full flex items-center justify-center">
+                            <span className="font-heading text-xs font-bold text-[#C9A063] tracking-tighter">CERT</span>
+                          </div>
+                          <div className="font-heading text-base lg:text-lg font-bold text-white leading-tight tracking-tight max-w-[260px]">
+                            {c.code}
+                          </div>
+                          <div className="text-[11px] text-zinc-400 leading-relaxed max-w-[300px] line-clamp-6">
+                            {desc}
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                    {/* Caption row — uniform height for grid alignment */}
+                    <div className="p-5 border-t border-white/5 min-h-[110px] flex flex-col gap-2">
+                      <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063]">{c.code}</div>
+                      <div className="text-sm text-white font-medium leading-snug">{title}</div>
+                      {imgSrc && desc && (
+                        <p className="text-[11px] text-zinc-500 leading-relaxed line-clamp-2 mt-1">{desc}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Zoom overlay */}
       {zoomed && (
@@ -244,25 +242,28 @@ export const CertificationsPage = () => {
         </div>
       )}
 
-      <section className="bg-[#0A0A0A] py-20 lg:py-24">
-        <div className="max-w-[1100px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10">
-          {certList.map((it, i) => (
-            <motion.div
-              key={it.k || i}
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
-              className="bg-[#0A0A0A] hover:bg-[#101010] p-8 flex flex-col gap-3 transition-colors"
-              data-testid={`cert-${i}`}
-            >
-              <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063]">{it.k}</div>
-              <h3 className="font-heading text-xl font-bold text-white tracking-tight">{it.t}</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed">{it.d}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      {/* Fallback: when CMS is empty, render static i18n cards. */}
+      {!useCMS && (
+        <section className="bg-[#0A0A0A] py-20 lg:py-24">
+          <div className="max-w-[1100px] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10">
+            {p.items.map((it, i) => (
+              <motion.div
+                key={it.k || i}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: i * 0.06 }}
+                className="bg-[#0A0A0A] hover:bg-[#101010] p-8 flex flex-col gap-3 transition-colors"
+                data-testid={`cert-${i}`}
+              >
+                <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063]">{it.k}</div>
+                <h3 className="font-heading text-xl font-bold text-white tracking-tight">{it.t}</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">{it.d}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
       <CTABlock />
     </PageShell>
   );

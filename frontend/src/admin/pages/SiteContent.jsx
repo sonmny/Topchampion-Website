@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   Plus, Pencil, Trash2, Award, Quote, Users as UsersIcon,
   Handshake, MapPin, Save, X, Upload, Image as ImageIcon, GripVertical, EyeOff, Eye,
+  Hammer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, API_BASE, formatApiError } from "../apiClient";
@@ -24,6 +25,7 @@ const TABS_CN = {
   "client-groups": "客户名单",
   partners: "合作伙伴",
   stats: "数字见证",
+  "engineering-images": "工程能力图",
   contact: "联系信息",
 };
 const TABS_EN = {
@@ -32,6 +34,7 @@ const TABS_EN = {
   "client-groups": "Client Groups",
   partners: "Partners",
   stats: "Stats",
+  "engineering-images": "Engineering Imgs",
   contact: "Contact Info",
 };
 
@@ -41,6 +44,7 @@ const TAB_ICONS = {
   "client-groups": UsersIcon,
   partners: Handshake,
   stats: Award,
+  "engineering-images": Hammer,
   contact: MapPin,
 };
 
@@ -94,6 +98,7 @@ export const SiteContentAdmin = () => {
       {active === "client-groups" && <ClientGroupsTab />}
       {active === "partners" && <PartnersTab />}
       {active === "stats" && <StatsTab />}
+      {active === "engineering-images" && <EngineeringImagesTab />}
       {active === "contact" && <ContactInfoTab />}
       </div>
     </AdminLayout>
@@ -810,5 +815,165 @@ const ContactInfoTab = () => {
         </PrimaryBtn>
       </div>
     </Section>
+  );
+};
+
+
+// -------------------- Engineering Images (carousel on /engineering) --------------------
+const EngineeringImagesTab = () => {
+  const { lang } = useLang();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    try { const { data } = await api.get("/site/engineering-images/admin"); setItems(data); }
+    catch (err) { toast.error(formatApiError(err)); } finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, []);
+
+  const remove = async (id) => {
+    if (!window.confirm(lang === "cn" ? "确认删除此图片？" : "Delete this image?")) return;
+    try { await api.delete(`/site/engineering-images/${id}`); toast.success(lang === "cn" ? "已删除" : "Deleted"); load(); }
+    catch (err) { toast.error(formatApiError(err)); }
+  };
+
+  const toggle = async (it) => {
+    try {
+      const fd = new FormData();
+      fd.append("enabled", String(!it.enabled));
+      await api.patch(`/site/engineering-images/${it.id}`, fd);
+      load();
+    } catch (err) { toast.error(formatApiError(err)); }
+  };
+
+  return (
+    <>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-sm text-zinc-400">{loading ? "…" : `${items.length} ${lang === "cn" ? "张图片" : "images"}`}</div>
+        <PrimaryBtn onClick={() => setEditing({})} testId="eng-new-btn">
+          <Plus size={15} /> {lang === "cn" ? "新增图片" : "New image"}
+        </PrimaryBtn>
+      </div>
+      <p className="text-xs text-zinc-500 mb-4 leading-relaxed">
+        {lang === "cn"
+          ? "这些图片将在 /engineering 工程能力页底部自动滚动展示。按 Order 字段排序(数字越小越靠前)。"
+          : "Shown in the auto-scrolling carousel at the bottom of the /engineering page, ordered by the Order field (lowest first)."}
+      </p>
+
+      <Section>
+        {items.map((it, i) => (
+          <div
+            key={it.id}
+            className={`flex flex-col md:flex-row md:items-center gap-4 p-5 ${i !== items.length - 1 ? "border-b border-white/5" : ""} ${!it.enabled ? "opacity-60" : ""}`}
+            data-testid={`eng-row-${it.id}`}
+          >
+            <div className="w-32 h-20 bg-white/5 overflow-hidden shrink-0">
+              <img src={`${API_BASE}${it.image_url.replace("/api", "")}`} alt="" className="w-full h-full object-cover" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] mb-1">
+                {String(it.order || 0).padStart(2, "0")}
+              </div>
+              <div className="text-sm text-white">{lang === "cn" ? (it.caption_cn || "—") : (it.caption_en || "—")}</div>
+              <div className="text-[11px] text-zinc-500 mt-0.5">{lang === "cn" ? (it.caption_en || "") : (it.caption_cn || "")}</div>
+            </div>
+            <RowToolbar enabled={it.enabled} onToggle={() => toggle(it)} onEdit={() => setEditing(it)} onDelete={() => remove(it.id)} testIdBase={`eng-${it.id}`} />
+          </div>
+        ))}
+        {!loading && items.length === 0 && (
+          <div className="p-10 text-center text-zinc-500 text-sm">
+            {lang === "cn" ? "暂无图片。点击右上角新增。" : "No images. Click New image."}
+          </div>
+        )}
+      </Section>
+
+      {editing && (
+        <EngineeringImageEditor
+          item={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(); }}
+        />
+      )}
+    </>
+  );
+};
+
+const EngineeringImageEditor = ({ item, onClose, onSaved }) => {
+  const { lang } = useLang();
+  const isNew = !item.id;
+  const [form, setForm] = useState({
+    caption_en: item.caption_en || "",
+    caption_cn: item.caption_cn || "",
+    order: item.order ?? 0,
+    enabled: item.enabled !== false,
+  });
+  const [imageFile, setImageFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (isNew && !imageFile) {
+      toast.error(lang === "cn" ? "请选择一张图片" : "Please choose an image");
+      return;
+    }
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => fd.append(k, String(v)));
+      if (imageFile) fd.append("image", imageFile);
+      if (isNew) await api.post("/site/engineering-images", fd);
+      else await api.patch(`/site/engineering-images/${item.id}`, fd);
+      toast.success(lang === "cn" ? "已保存" : "Saved");
+      onSaved();
+    } catch (err) { toast.error(formatApiError(err)); } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="eng-editor">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 sticky top-0 bg-[#0A0A0A]">
+          <h3 className="font-heading text-lg font-bold">
+            {isNew ? (lang === "cn" ? "新增工程图片" : "New engineering image") : (lang === "cn" ? "编辑工程图片" : "Edit engineering image")}
+          </h3>
+          <button onClick={onClose} className="text-zinc-400 hover:text-white" data-testid="eng-editor-close"><X size={18} /></button>
+        </div>
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2"><TextField label="Caption (EN)" value={form.caption_en} onChange={(v) => setForm({ ...form, caption_en: v })} testId="eng-f-cap-en" placeholder="ABB MNS-E assembly line — Kunshan factory" /></div>
+          <div className="sm:col-span-2"><TextField label="说明 (中文)" value={form.caption_cn} onChange={(v) => setForm({ ...form, caption_cn: v })} testId="eng-f-cap-cn" placeholder="ABB MNS-E 总装产线 · 昆山工厂" /></div>
+          <TextField label="Order" value={form.order} onChange={(v) => setForm({ ...form, order: parseInt(v) || 0 })} testId="eng-f-order" />
+          <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer h-10 mt-6">
+            <input type="checkbox" checked={form.enabled} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} data-testid="eng-f-enabled" className="w-4 h-4 accent-[#0F6B3F]" />
+            {lang === "cn" ? "在网站上显示" : "Visible"}
+          </label>
+          <div className="sm:col-span-2 flex flex-col gap-2">
+            <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-zinc-500">
+              {lang === "cn" ? `图片 ${isNew ? "(必选)" : "(留空则保留)"} · JPG/PNG/WEBP` : `Image ${isNew ? "(required)" : "(leave empty to keep)"} · JPG/PNG/WEBP`}
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <span className="inline-flex items-center gap-2 h-10 px-4 border border-white/10 hover:border-[#C9A063] text-zinc-300 text-sm transition-colors">
+                <Upload size={14} /> {lang === "cn" ? "选择文件" : "Choose file"}
+              </span>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="hidden"
+                data-testid="eng-f-image"
+              />
+              <span className="text-xs text-zinc-500">
+                {imageFile ? imageFile.name : (item.image_url ? (lang === "cn" ? "保留现有图片" : "Keep existing") : (lang === "cn" ? "未选择" : "None"))}
+              </span>
+            </label>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/10">
+          <GhostBtn onClick={onClose} testId="eng-cancel">{lang === "cn" ? "取消" : "Cancel"}</GhostBtn>
+          <PrimaryBtn onClick={save} disabled={saving} testId="eng-save">
+            <Save size={14} /> {saving ? (lang === "cn" ? "保存中…" : "Saving…") : (lang === "cn" ? "保存" : "Save")}
+          </PrimaryBtn>
+        </div>
+      </div>
+    </div>
   );
 };

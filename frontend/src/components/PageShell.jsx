@@ -19,18 +19,61 @@ export const PageShell = ({ children }) => {
   );
 };
 
+// Label → href map (both EN and CN). The last item is always the current page
+// and is rendered as plain text. Any other label found here becomes a Link.
+const BREADCRUMB_HREFS = {
+  // EN
+  Home: "/",
+  Solutions: "/solutions",
+  Engineering: "/engineering",
+  "Case Studies": "/cases",
+  Contact: "/contact",
+  About: "/about",
+  Careers: "/careers",
+  Certifications: "/certifications",
+  "Privacy Policy": "/privacy",
+  // CN
+  "首页": "/",
+  "解决方案": "/solutions",
+  "工程能力": "/engineering",
+  "工程卓越": "/engineering",
+  "案例研究": "/cases",
+  "联系我们": "/contact",
+  "关于我们": "/about",
+  "招贤纳士": "/careers",
+  "招聘": "/careers",
+  "认证证书": "/certifications",
+  "认证": "/certifications",
+  "认证与合规": "/certifications",
+  "隐私政策": "/privacy",
+};
+
 export const PageHero = ({ breadcrumb = [], title, subtitle }) => (
   <section className="relative bg-[#0A0A0A] border-b border-white/10 overflow-hidden">
     <div className="absolute -right-32 -top-20 w-[420px] h-[420px] glow-blue pointer-events-none" />
     <div className="absolute -left-20 bottom-0 w-[300px] h-[300px] glow-green pointer-events-none opacity-60" />
     <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 py-20 lg:py-28">
-      <nav className="flex items-center gap-2 mb-8 font-mono text-[10px] tracking-[0.2em] uppercase text-zinc-500" data-testid="breadcrumb">
-        {breadcrumb.map((b, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && <ChevronRight size={12} className="opacity-50" />}
-            <span className={i === breadcrumb.length - 1 ? "text-[#C9A063]" : ""}>{b}</span>
-          </React.Fragment>
-        ))}
+      <nav className="flex items-center gap-2 mb-8 font-mono text-[10px] tracking-[0.2em] uppercase text-zinc-500 flex-wrap" data-testid="breadcrumb" aria-label="Breadcrumb">
+        {breadcrumb.map((b, i) => {
+          const isLast = i === breadcrumb.length - 1;
+          const href = BREADCRUMB_HREFS[b];
+          return (
+            <React.Fragment key={i}>
+              {i > 0 && <ChevronRight size={12} className="opacity-50 shrink-0" />}
+              {isLast || !href ? (
+                <span className={isLast ? "text-[#C9A063]" : ""} data-testid={`breadcrumb-${i}`}>{b}</span>
+              ) : (
+                <Link
+                  to={href}
+                  data-testid={`breadcrumb-link-${i}`}
+                  className="hover:text-[#C9A063] transition-colors"
+                >
+                  {b}
+                </Link>
+              )}
+            </React.Fragment>
+          );
+        })}
       </nav>
       <motion.h1
         initial={{ opacity: 0, y: 14 }}

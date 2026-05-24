@@ -1,49 +1,79 @@
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useLang } from "../i18n/LangContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 
+/**
+ * AnimatedValue — counts smoothly from 0 to the numeric body of `value`.
+ * Robust against stale-closure pitfalls: keeps the latest animation function in a ref
+ * and re-runs whenever `value` changes after the element has entered the viewport.
+ */
 const AnimatedValue = ({ value }) => {
-  // Parse: optional prefix → numeric body (commas allowed) → optional suffix ("+", "MW", "%" etc.)
-  const str = String(value || "");
+  const str = String(value ?? "");
   const match = str.match(/^([^\d]*)([\d,]+\.?\d*)(.*)$/);
-  const targetStr = match ? match[2].replace(/,/g, "") : "0";
-  const target = parseFloat(targetStr) || 0;
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-  const [display, setDisplay] = useState("0");
+  const target = match ? parseFloat(match[2].replace(/,/g, "")) : 0;
+  const hasCommas = !!match && match[2].includes(",");
+  const isWhole = target % 1 === 0;
+  const prefix = match ? match[1] : "";
+  const suffix = match ? match[3] : "";
 
+  const elRef = useRef(null);
+  const rafRef = useRef(null);
+  const [display, setDisplay] = useState(match ? "0" : str);
+  const [inView, setInView] = useState(false);
+
+  // One-shot IntersectionObserver — once visible, set inView = true.
   useEffect(() => {
-    if (!match || !inView) return;
-    const dur = 1400;
-    const start = performance.now();
-    let raf;
+    if (!elRef.current) return;
+    // If IntersectionObserver isn't available (very old browsers / SSR), just play.
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setInView(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    obs.observe(elRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  // Whenever the target value changes AND we're already in view, restart the count animation.
+  useEffect(() => {
+    if (target == null || Number.isNaN(target) || !inView) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const duration = 1600;
+    const startTime = performance.now();
+    const startVal = 0;
     const fmt = (n) => {
-      const whole = target % 1 === 0;
-      const numStr = whole ? Math.round(n).toString() : n.toFixed(2);
-      // Re-insert thousands separators if the original had them
-      return match[2].includes(",")
-        ? numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        : numStr;
+      const numStr = isWhole ? Math.round(n).toString() : n.toFixed(2);
+      return hasCommas ? numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : numStr;
     };
     const tick = (now) => {
-      const p = Math.min(1, (now - start) / dur);
+      const p = Math.min(1, (now - startTime) / duration);
       const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(fmt(target * eased));
-      if (p < 1) raf = requestAnimationFrame(tick);
+      const current = startVal + (target - startVal) * eased;
+      setDisplay(fmt(current));
+      if (p < 1) rafRef.current = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-    // Re-run only when the actual target value or view state changes.
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    // NB: `match` (regex result) is a new object every render — exclude it from deps to avoid
+    // perpetual reset. `target`, `hasCommas`, and `isWhole` derive from it, so they cover us.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView, target]);
+  }, [inView, target, hasCommas, isWhole]);
 
-  if (!match) return <span>{value}</span>;
+  if (!match) return <span ref={elRef} data-testid="stat-value-animated">{str}</span>;
   return (
-    <span ref={ref} data-testid="stat-value-animated">
-      {match[1]}
+    <span ref={elRef} data-testid="stat-value-animated">
+      {prefix}
       {display}
-      {match[3]}
+      {suffix}
     </span>
   );
 };
@@ -69,7 +99,7 @@ export const Stats = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/10">
           {items.map((s, i) => (
             <motion.div
-              key={i}
+              key={`${s.label}-${i}`}
               data-testid={`stat-${i}`}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}

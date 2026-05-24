@@ -329,6 +329,43 @@ async def health():
     return {"status": "healthy", "time": datetime.now(timezone.utc).isoformat()}
 
 
+# ----- Admin dashboard metrics -----
+@api_router.get("/dashboard/stats")
+async def dashboard_stats(current=Depends(get_current_user)):
+    """Aggregated counters shown on the admin dashboard.
+    Returns project counts (scoped to caller's visibility) and lead counts (admins or view_leads perm only).
+    """
+    # Project counters — scoped via the same filter used by GET /projects
+    pf = await _scoped_project_filter(current)
+    projects_total = await db.projects.count_documents(pf)
+    projects_pending = await db.projects.count_documents({**pf, "pending_status": {"$ne": None}})
+
+    # Lead counters — admin or view_leads permission
+    can_see_leads = current.get("role") == "admin" or "view_leads" in (current.get("permissions") or [])
+    leads_today = leads_total = leads_unread = 0
+    if can_see_leads:
+        now = datetime.now(timezone.utc)
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        leads_total = await db.leads.count_documents({})
+        leads_unread = await db.leads.count_documents({"status": "new"})
+        leads_today = await db.leads.count_documents({"created_at": {"$gte": start_of_day}})
+
+    # User count (admin only)
+    users_total = 0
+    if current.get("role") == "admin":
+        users_total = await db.users.count_documents({})
+
+    return {
+        "projects_total": projects_total,
+        "projects_pending_review": projects_pending,
+        "leads_total": leads_total,
+        "leads_unread": leads_unread,
+        "leads_today": leads_today,
+        "users_total": users_total,
+        "can_see_leads": can_see_leads,
+    }
+
+
 # ----- Existing leads (public form) -----
 class LeadFile(BaseModel):
     id: str

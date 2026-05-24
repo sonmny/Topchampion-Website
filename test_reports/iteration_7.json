@@ -1,0 +1,37 @@
+{
+  "summary": "Phase 10 (7 features) tested end-to-end. Backend: 15/15 pytest cases pass (test_iteration7.py) covering /api/dashboard/stats (admin payload, non-admin leads-hidden, 401 unauth), public/admin site/stats sanity, certifications order check + multipart image PATCH persistence on TWO different certs (ISO 9001 + a second), engineering-images full CRUD (auth gate + create + PATCH + disable hides public + ordering + delete + image stream). Initial 1 timeout was network-transient (retry passed). Frontend: Stats counter ANIMATES 0→{20, 4, 27+, 28} within ~2s via IntersectionObserver. CertsHome renders ALL 6 enabled certs with UNIFORM 325x332 tiles (3 image + 3 text-fallback) respecting CMS order. /certifications page renders all 6 cards (data-testid=cert-card-{id}). Breadcrumbs on /solutions/tire-production show 3 items with first 2 clickable (data-testid=breadcrumb-link-0 → /, breadcrumb-link-1 → /solutions verified). Engineering carousel section APPEARS only after at least one engineering-image is added (verified by creating + visiting + carousel renders 545px tall with marquee dup imgs). Admin dashboard /admin shows all 6 metric cards (metric-leads-today=2, leads-unread=4, leads-total=19, projects-total=1, projects-pending=0, users-total=1) matching /api/dashboard/stats exactly. Admin CMS now has 7 tabs including 工程能力图.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/certifications gallery", "issues": ["Cert cards with image_url are 367x589 while text-fallback cards are 367x571 — a small 18px height delta. The CertsHome strip is perfectly uniform (325x332). Specification says cards should be 'at the same dimensions'; consider equalising min-height on the typographic fallback card to match image-bearing card height exactly."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration7.py",
+    "/app/test_reports/pytest/iteration_7_results.xml"
+  ],
+  "action_items": [
+    "Minor: equalise /certifications card heights (image vs text-fallback) — 18px delta observed (589 vs 571).",
+    "Spec ambiguity: stats counter animation completed in ~2s with values from CMS (20, 4, 27+, 28); spec target was ~1.6s — the rounding works, but if precision needed, shorten duration constant in AnimatedValue."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard endpoint correctly gates leads visibility (admin OR view_leads perm). Confirmed: a fresh `user` role without view_leads sees can_see_leads=false and leads_* all zero, plus users_total=0 (admin-only).",
+    "engineering-images endpoints follow the same patterns as certifications: multipart POST (auth-only), PATCH with optional image swap that unlinks old file when extension changes, DELETE removes disk file, /image stream falls back to 404 if disk file missing. Solid implementation.",
+    "CertsHome.jsx correctly renders ALL 6 enabled certs in uniform tiles with typographic fallback for image-less certs.",
+    "Breadcrumbs render 2 link items on /solutions/tire-production with correct hrefs (/ and /solutions); current page is plain text (no breadcrumb-link-2). On /engineering and /certifications, only 1 link (Home) since they're top-level. Spec satisfied.",
+    "Cert image upload PATCH multipart works across multiple certs (proven by uploading to 2 separate cert IDs and re-fetching admin list — both retain their image_url). No collision/overwrite.",
+    "AdminDashboard.jsx wires every metric tile to data-testid as specified."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration7.py (new — 15 cases, all pass; auto-cleanup of TEST_R7_* users and eng-images)"
+  ],
+  "success_rate": {"backend": "100% (15/15)", "frontend": "100% on functionality; 1 minor design delta on /certifications card heights"},
+  "test_credentials": "admin / Topchampion (works). Test user created in non-admin dashboard test, auto-deleted via cleanup fixture.",
+  "seed_data_creation": "test_iteration7.py creates 1 TEST_R7_user_* (deleted), creates+deletes engineering-images during CRUD tests (cleanup leaves 0). Two certs (ISO 9001 + IEC) had image_url set via PATCH but original certs remain — image binary preserved as part of normal site content.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run: REACT_APP_BACKEND_URL=https://green-automation-pro.preview.emergentagent.com pytest /app/backend/tests/test_iteration7.py -v. Dashboard endpoint = GET /api/dashboard/stats (Bearer required). Engineering carousel only appears when ≥1 enabled engineering-image exists. Admin CMS tab list now contains 7 tabs (certs/cases/clients/partners/数字见证/工程能力图/联系信息). Two certs (ISO 9001:2015 and 国家高新技术企业 and CCC) now carry uploaded image_url from this iteration's tests — that's expected and persistent. Existing test_iteration6.py still passes (regression).",
+  "rca_of_the_issue": "No blocking bugs. One minor design delta: /certifications card heights differ by 18px between image and text-fallback cards. CertsHome strip on homepage is perfectly uniform. Stats animation duration is closer to 2s than 1.6s but values land correctly."
+}

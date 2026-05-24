@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="15" time="59.807" timestamp="2026-05-24T01:20:11.908041+00:00" hostname="agent-env-1721fbc2-00d3-4136-9ab2-cb9fd70d73c9"><testcase classname="backend.tests.test_iteration7.TestDashboardStats" name="test_unauth" time="20.073"><failure message="requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='green-automation-pro.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/dashboard/stats (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='green-automation-pro.preview.emergentagent.com', port=443) at 0xf882d3af0750&gt;, 'Connection to green-automation-pro.preview.emergentagent.com timed out. (connect timeout=10)'))">/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:204: in _new_conn
+    sock = connection.create_connection(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/connection.py:85: in create_connection
+    raise err
+/root/.venv/lib/python3.11/site-packages/urllib3/util/connection.py:73: in create_connection
+    sock.connect(sa)
+E   TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:788: in urlopen
+    response = self._make_request(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:488: in _make_request
+    raise new_e
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:464: in _make_request
+    self._validate_conn(conn)
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:1106: in _validate_conn
+    conn.connect()
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:759: in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:213: in _new_conn
+    raise ConnectTimeoutError(
+E   urllib3.exceptions.ConnectTimeoutError: (&lt;HTTPSConnection(host='green-automation-pro.preview.emergentagent.com', port=443) at 0xf882d3af0750&gt;, 'Connection to green-automation-pro.preview.emergentagent.com timed out. (connect timeout=10)')
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:696: in send
+    resp = conn.urlopen(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:842: in urlopen
+    retries = retries.increment(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/retry.py:543: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='green-automation-pro.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/dashboard/stats (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='green-automation-pro.preview.emergentagent.com', port=443) at 0xf882d3af0750&gt;, 'Connection to green-automation-pro.preview.emergentagent.com timed out. (connect timeout=10)'))
+
+During handling of the above exception, another exception occurred:
+backend/tests/test_iteration7.py:63: in test_unauth
+    r = requests.get(f"{API}/dashboard/stats", timeout=10)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/api.py:87: in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/api.py:71: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:651: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:784: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:717: in send
+    raise ConnectTimeout(e, request=request)
+E   requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='green-automation-pro.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/dashboard/stats (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='green-automation-pro.preview.emergentagent.com', port=443) at 0xf882d3af0750&gt;, 'Connection to green-automation-pro.preview.emergentagent.com timed out. (connect timeout=10)'))</failure></testcase><testcase classname="backend.tests.test_iteration7.TestDashboardStats" name="test_admin_full_payload" time="10.546" /><testcase classname="backend.tests.test_iteration7.TestDashboardStats" name="test_non_admin_no_leads" time="10.869" /><testcase classname="backend.tests.test_iteration7.TestSiteStatsPublic" name="test_get" time="0.126" /><testcase classname="backend.tests.test_iteration7.TestCertificationsCMS" name="test_public_list_count_and_order" time="0.140" /><testcase classname="backend.tests.test_iteration7.TestCertificationsCMS" name="test_upload_image_for_two_certs" time="15.757" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_public_list_unauth" time="0.130" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_admin_list_requires_auth" time="0.102" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_admin_list_with_auth" time="0.105" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_create_requires_auth" time="0.125" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_create_engineering_image" time="0.340" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_patch_engineering_image" time="0.108" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_disable_hides_from_public" time="0.324" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_order_ascending_public" time="0.226" /><testcase classname="backend.tests.test_iteration7.TestEngineeringImagesCRUD" name="test_delete_engineering_image" time="0.674" /></testsuite></testsuites>
