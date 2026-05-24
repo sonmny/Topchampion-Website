@@ -1,0 +1,37 @@
+{
+  "summary": "Phase 9 (6-point feature set) rigorously tested. Backend: 21/21 pytest cases pass (test_iteration6.py) covering all 6 public CMS endpoints (certifications/case-studies/client-groups/partners/contact-info/stats), Stats CMS full CRUD with auth gating, full project workflow state machine (draft → in_design → in_production → commissioning → delivered → archived via request-advance → approve-advance), reject-advance clears pending_status, 409 on duplicate request and approve-without-pending, archived-cannot-advance, photo-category file upload preserves category + uploaded_by_name, lead multipart regression, admin login. Frontend: Stats CMS data renders on homepage (CN labels '年深耕 · 2005 年成立' etc. confirmed). Solutions section renders 4 cards (extra HV/LV switchgear card present; spec said 3) including correct 自动化设备 / 自控系统硬件集成 / 软件开发 in CN. CertsHome section rendered with 4 cert cards and 9 links to /certifications. Engineering page text confirmed 'MON · FRI · 24/7 SUPPORT' (NOT 'FAT · SAT'). Country dropdown priority order CN/US/HK/TW verified in BOTH EN and CN modes (Radix Select via role=option). CMS admin shows 6 tabs (certs/cases/clients/partners/stats/contact). Project Form has no PLC Brand field. Frontend ProjectStatusCard found via data-testid on existing project; deeper UI workflow buttons not exercised but backend workflow proven end-to-end.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Solutions homepage card count", "issue": "Spec calls for 3 renamed cards (自动化设备 / 自控系统硬件集成 / 软件开发) but homepage Solutions section renders 4 cards (an additional '02 / 电力 — 高/低压控制柜' card sits between Automation Equipment and Hardware Integration). All 3 required cards are present and labelled correctly in both EN and CN; only the extra '高/低压控制柜' card may be an undocumented retention. Confirm with main agent whether this is intentional.", "affected_selectors": ["[data-testid='solutions-section']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration6.py",
+    "/app/test_reports/pytest/iteration_6_results.xml"
+  ],
+  "action_items": [
+    "Decision: keep 4 Solutions cards on homepage (with HV/LV switchgear) OR collapse to exactly 3 per spec. The 3 required cards are present and correctly labelled in EN+CN; only the extra '高/低压控制柜' card differs from spec count.",
+    "Optional: add data-testid='project-timeline' wrapper on ProjectTimeline to make automated detection easier (status-card testid already present)."
+  ],
+  "critical_code_review_comments": [
+    "cms.py Stats endpoints reuse the generic await_make_crud helper (slug='stats', collection='site_stats') — same shape as partners/case-studies. CRUD works end-to-end including order/enabled flags.",
+    "Workflow endpoints in server.py correctly enforce: (a) pending_status must be empty before request-advance (409), (b) archived projects cannot advance further (409), (c) reject clears pending_status without changing status, (d) status_history is append-only with kind in {created, request_advance, approved, rejected}.",
+    "Authorisation for request-advance: admin OR edit_projects perm OR view_progress perm OR assigned customer. approve-advance and reject-advance are admin-only — correct separation of duties.",
+    "POST /api/projects/{pid}/files allows admin OR user with manage_files permission — matches spec. uploaded_by_name set from full_name||username. category accepts 'photo' (validated to one of code/drawing/photo).",
+    "ProjectIn still accepts plc_brand field on backend even though frontend ProjectForm removed it — harmless but consider removing from Pydantic model later for hygiene.",
+    "Country sorting in /app/frontend/src/i18n/countries.js correctly puts PRIORITY_CODES first then sorts rest by lang-aware localeCompare; verified live in both EN and CN."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration6.py (new — 21 cases, all pass; auto-cleanup of TEST_R6_* stats and projects)"
+  ],
+  "success_rate": {"backend": "100% (21/21)", "frontend": "~95% (Stats/CertsHome/Engineering/Country dropdown/CMS tabs/no PLC field all PASS; Solutions has 4 cards vs spec 3)"},
+  "test_credentials": "admin / Topchampion (seeded; works)",
+  "seed_data_creation": "test_iteration6.py creates ~3 TEST_R6_* stats (auto-deleted) and ~5 TEST_R6_* projects (auto-deleted via DELETE /api/projects/{id}). 1 TEST_R6_lead remains by design (no DELETE endpoint).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run: REACT_APP_BACKEND_URL=https://green-automation-pro.preview.emergentagent.com pytest /app/backend/tests/test_iteration6.py /app/backend/tests/test_iteration5.py -v. Project workflow state machine fully proven via backend (test_full_workflow_progression walks draft→in_design→in_production→commissioning→delivered→archived). CMS admin /admin/cms exposes 6 tabs (certs/cases/clients/partners/stats/contact). Country dropdown is a Radix Select; options live in a portal — query via [role='option'] not within the trigger.",
+  "rca_of_the_issue": "No blocking bugs found in Phase 9. One spec-vs-impl discrepancy: homepage Solutions renders 4 cards (the spec said 3). The 3 required cards (自动化设备 / 自控系统硬件集成 / 软件开发) are present and correctly labelled bilingually; the additional '高/低压控制柜' card is the only delta — likely an oversight when renaming. Main agent should confirm whether to keep or remove the extra Power Switchgear card."
+}
