@@ -71,6 +71,35 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
 - **iteration_6 深度测试 (2026-02)**:21/21 backend pytest 通过 · ~95% frontend 通过(Stats/CertsHome/Engineering 文本/国家排序/CMS 6 tabs/无 PLC 字段全部 PASS)
 - **用户决策 (2026-02)**:首页"解决方案"保留 4 张卡片(含"高/低压控制柜",非重命名要求范围内);Resend API Key 暂不配置,保持安全跳过模式
 
+## Phase 10 (2026-02) — Seven-Item Polish Pass
+用户反馈 6 项核心问题 + 1 项权限测试:
+- **#1 Stats 计数动画修复**:之前因 `match` 数组每次 render 都是新引用而被列入 useEffect deps 导致动画死循环重置 → 数字卡在 0。重写 AnimatedValue 使用 IntersectionObserver + 仅 `[inView, target, hasCommas, isWhole]` 作为 deps,动画现可从 0 平滑滚动到 CMS 目标值(~1.6s,cubic ease-out)。
+- **#2 认证证书 CMS 多图上传**:后端 CMS PATCH 多 cert 上传逻辑本来就正确(curl 验证)。问题在前端展示:
+  - `CertsHome.jsx`:移除 `.slice(0, 4)` → 显示所有 enabled 证书,严格按 `order` 排序。无图证书与有图证书使用相同 `aspect-[4/3]` 视觉区,无图时显示 CERT 徽标 + 编号 + 描述。
+  - `CertificationsPage`(/certifications):重写为统一画廊,所有 6 张 CMS 证书共享 `aspect-[1/1.25]` 视觉区 + `min-h-[110px]` 标题区,有图/无图卡 高度完全一致(实测均为 568.328px,无 18px 差异)。
+- **#3 可点击面包屑**:`PageShell.jsx` PageHero 新增 `BREADCRUMB_HREFS` 标签 → 路径映射(EN+CN 双语),除最后一项(当前页)外都渲染为 `<Link>`,可点击逐层返回(`data-testid=breadcrumb-link-{i}`)。
+- **#4 工程能力页轮播**:
+  - 后端新增 CMS 类型 `engineering-images`(/api/site/engineering-images CRUD,与 certifications 相同的 multipart 上传模式)
+  - 新组件 `EngineeringCarousel.jsx`(无 CMS 数据时不渲染) + CSS `@keyframes marquee-scroll` 自动水平滚动(hover 暂停,两侧渐变遮罩,数组复制实现无缝循环)
+  - `/engineering` 页面在 EngineeringTimeline 之后挂载 `<EngineeringCarousel />`
+  - `SiteContent.jsx` 新增第 6 个 tab "工程能力图"(EngineeringImagesTab + EngineeringImageEditor)
+- **#5 后台仪表盘增强**:
+  - 新后端 `GET /api/dashboard/stats`,按角色/权限返回 `leads_today / leads_unread / leads_total / projects_total / projects_pending_review / users_total / can_see_leads`
+  - 重写 `AdminDashboard.jsx`:分两个区块——"客户咨询收件箱"(3 卡:今日/未读/总数,unread > 0 时金色 + animate-pulse)和"项目与团队"(总数/待审批/用户数)
+- **#6 项目审计追踪 UI 增强**:
+  - `FileCard` 文件卡新增第三行(`data-testid=uploader-{file_id}`):显示 `uploaded_by_name · uploaded_date`
+  - photo 类别在 FileCard 顶部 chip 正确显示
+  - 状态变更时间线(ProjectTimeline)早已显示 `by_user_name` + 时间,本期未改
+- **#7 权限矩阵验证**:
+  - dashboard 端点严格双重检查:admin 一律可见所有指标,非 admin 仅在 `view_leads` 权限下看到 lead 区,users_total 仅 admin 可见
+  - 工程能力图 CMS 端点全部 require_admin
+  - 文件上传仍由 admin OR `manage_files` 权限控制(代码未变)
+  - 状态推进权限链:request(admin/edit_projects/view_progress/分配的 customer) → approve/reject(仅 admin)
+- **验证**:`testing_agent_v3_fork iteration_7` 后端 15/15 通过,前端功能 100%。设计差异 18px 已修复(所有 cert card 高度统一 568.328px)。
+- **新增文件**:
+  - `/app/frontend/src/components/EngineeringCarousel.jsx`
+  - `/app/backend/tests/test_iteration7.py`(15 cases)
+
 - **新增后端**:`/app/backend/cms.py` 完整 CMS 路由,集成到 `register_cms_routes()`
 - **公开只读端点**(任何人访问公开页面时调用):
   - `GET /api/site/certifications` · `GET /api/site/case-studies` · `GET /api/site/client-groups` · `GET /api/site/partners` · `GET /api/site/contact-info`

@@ -215,13 +215,10 @@ export const CertificationsPage = () => {
                         </div>
                       )}
                     </button>
-                    {/* Caption row — uniform height for grid alignment */}
-                    <div className="p-5 border-t border-white/5 min-h-[110px] flex flex-col gap-2">
+                    {/* Caption row — identical structure for image & text cards so heights stay uniform */}
+                    <div className="p-5 border-t border-white/5 min-h-[110px] flex flex-col justify-center gap-2">
                       <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063]">{c.code}</div>
-                      <div className="text-sm text-white font-medium leading-snug">{title}</div>
-                      {imgSrc && desc && (
-                        <p className="text-[11px] text-zinc-500 leading-relaxed line-clamp-2 mt-1">{desc}</p>
-                      )}
+                      <div className="text-sm text-white font-medium leading-snug line-clamp-2">{title}</div>
                     </div>
                   </div>
                 );
