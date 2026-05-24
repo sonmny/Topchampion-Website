@@ -68,6 +68,8 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
   - 前端:`ProjectStatusCard` 6 步进度条 + 申请按钮 + 待审核徽章 + 批准/驳回按钮;`ProjectTimeline` 活动时间线
   - 新权限 `view_progress` 加入 PERMISSION_SET,UsersList 与 i18n 同步
 - **验证**:所有 6 项 Playwright 截图 + curl 端到端测试通过(状态机:request→approve 完整流程 OK)
+- **iteration_6 深度测试 (2026-02)**:21/21 backend pytest 通过 · ~95% frontend 通过(Stats/CertsHome/Engineering 文本/国家排序/CMS 6 tabs/无 PLC 字段全部 PASS)
+- **用户决策 (2026-02)**:首页"解决方案"保留 4 张卡片(含"高/低压控制柜",非重命名要求范围内);Resend API Key 暂不配置,保持安全跳过模式
 
 - **新增后端**:`/app/backend/cms.py` 完整 CMS 路由,集成到 `register_cms_routes()`
 - **公开只读端点**(任何人访问公开页面时调用):
