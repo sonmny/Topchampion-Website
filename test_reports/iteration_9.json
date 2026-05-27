@@ -1,0 +1,36 @@
+{
+  "summary": "RETEST iteration 9 — Both blocking backend bugs from iteration_8 are FIXED and verified. (1) File category whitelist extended (server.py ~L1002-1008): all 9 categories (3 legacy + 6 new) now persist correctly through POST /api/projects/{pid}/files. (2) customer_materials defaulted to [] on create_project (~L804-805) + on_startup backfill (~L345-346): POST /api/projects/{pid}/materials now returns 200 and persists. Full end-to-end round-trip gate test executed and PASSED — entry→design→procurement→manufacturing→testing→shipping→archived, with all 5 gates (approval_drawing for design→procurement, materials supplied for procurement→manufacturing, product_photo+inspection_report for testing→shipping, as_built_drawing for shipping→archived) all returning 409 when unmet and 200 when satisfied. Customer portal frontend flow verified end-to-end: provisioned customer logs into /admin/login → redirects to /portal → sees project list, 7-stage stepper (项目录入→已归档), customer_welcome notification, file list grouped by category, logout works. All 10 pytest cases pass (7 from iteration_8 + 3 new: full_roundtrip + regression + legitimate_project_preserved). Final cleanup verified: 0 test artefacts remain; the legitimate project 5b138ec0... is at status='manufacturing', customer_materials=[], files=[], customer_email=None.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration8.py",
+    "/app/backend/tests/test_iteration9_roundtrip.py",
+    "/app/test_reports/pytest/iteration_9_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix #1 (file categories) correctly uses an ALLOWED_FILE_CATEGORIES tuple including all 9 canonical values; the coercion fallback is preserved as a safety net rather than removed. Acceptable but could be tightened by replacing Form() with Literal[...] in the signature to 422 on truly bad input instead of silently coercing to 'drawing'.",
+    "Fix #2 (customer_materials null) is the correct two-layer fix: defensive default in create_project + idempotent on_startup backfill. The PATCH /api/projects/{pid} endpoint at line 822 still strips None values (`if v is not None`), so admins cannot null-out customer_email or customer_user_id via API — required raw Mongo $unset to detach the test customer at cleanup. Consider exposing a way to clear these fields explicitly (e.g., empty-string handling or a dedicated detach endpoint), though not urgent.",
+    "Round-trip gate logic (validate_stage_requirements + approve_status_advance) is correct end-to-end after the two fixes. Notification persistence + customer auto-provisioning + login + project scoping continue to work as expected.",
+    "Customer portal UI (CustomerPortal.jsx) renders stepper, notifications, file groups, and logout correctly. UI labels are bilingual (CN default). No interaction or contrast issues found in the smoke test."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration9_roundtrip.py (new — 3 cases: full_roundtrip_all_gates, regression_dashboard_cms_leads_login, legitimate_project_preserved)",
+    "/app/test_reports/pytest/iteration_9_results.xml",
+    "/app/test_reports/iteration_9.json"
+  ],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "100% — customer portal login/stepper/notifications/files/logout all verified"},
+  "test_credentials": "admin/Topchampion (verified). Customer accounts used in tests: TEST_R8_provision (auto-cleaned by fixture), test_portal_user@example.com (manually cleaned via DELETE /api/users/{id}). No leftover users.",
+  "seed_data_creation": "TEST_R9_roundtrip project (created+cleaned by module fixture), TEST_R8_phase11/TEST_R8_gates/TEST_R8_provision/TEST_R8_noemail (all auto-cleaned). The legitimate project 5b138ec0-f769-418f-ad83-87fbdca01d99 (name='1') was restored via Mongo $unset to status='manufacturing', customer_materials=[], files=[], customer_email=None, customer_user_id=None — matching user spec.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All Phase 11 functionality verified working. Two pytest suites cover the full workflow: test_iteration8.py (7 cases incl. migration/categories/gates/materials/customer/notifications/dashboard) + test_iteration9_roundtrip.py (3 cases incl. full 7-stage round-trip with every gate). Run both for regression. Note: PATCH /api/projects strips None values, so to detach a customer from a project, you must either use raw Mongo or extend the API (low priority enhancement, not blocking).",
+  "rca_of_the_issue": "Both bugs from iteration_8 had clear root causes and clean fixes. Bug #1 RCA: server.py was downgrading any non-legacy category to 'drawing' — fix extended the whitelist to all 9 valid categories. Bug #2 RCA: Mongo $push fails on null fields (vs missing) — fix initialised the field to [] at creation time and backfilled existing null entries on startup. Both verified passing via pytest /app/backend/tests/test_iteration8.py (7/7) plus the new /app/backend/tests/test_iteration9_roundtrip.py (3/3) which exercises every single gate in the full 7-stage lifecycle. Frontend customer portal verified via playwright: login redirect, stepper render, notifications, files section, logout — all working."
+}

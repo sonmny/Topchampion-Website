@@ -341,6 +341,9 @@ async def on_startup():
         if legacy != new:  # archived → archived doesn't need rewriting
             await db.projects.update_many({"status": legacy}, {"$set": {"status": new}})
             await db.projects.update_many({"pending_status": legacy}, {"$set": {"pending_status": new}})
+    # Backfill nullable list fields so $push operations don't 500
+    await db.projects.update_many({"customer_materials": None}, {"$set": {"customer_materials": []}})
+    await db.projects.update_many({"customer_materials": {"$exists": False}}, {"$set": {"customer_materials": []}})
     # Seed CMS defaults (idempotent)
     await seed_cms_defaults(db)
     # Seed admin
@@ -797,6 +800,9 @@ async def create_project(payload: ProjectIn, current=Depends(require_admin)):
         "updated_at": now,
         "created_by": current["id"],
     })
+    # Ensure list fields are arrays (not None) so $push works downstream
+    if doc.get("customer_materials") is None:
+        doc["customer_materials"] = []
     await db.projects.insert_one(dict(doc))
     return _serialize(doc)
 
@@ -993,14 +999,20 @@ async def upload_project_file(
     project = await db.projects.find_one({"id": pid}, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if category not in ("code", "drawing", "photo"):
+    ALLOWED_FILE_CATEGORIES = (
+        "code", "drawing", "photo",
+        "approval_drawing", "design_input", "design_output",
+        "as_built_drawing", "product_photo", "inspection_report",
+    )
+    if category not in ALLOWED_FILE_CATEGORIES:
         category = "drawing"
+    # Extend file-extension whitelist for office docs uploaded as inspection reports / design inputs
     data = await file.read()
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail=f"File too large (max {MAX_UPLOAD_BYTES // (1024*1024)} MB)")
     file_id = str(uuid.uuid4())
     suffix = Path(file.filename or "").suffix.lower() or ".bin"
-    if suffix not in (".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".bin", ".txt", ".json", ".xml", ".yaml", ".yml", ".py", ".js", ".csv", ".heic", ".heif"):
+    if suffix not in (".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".bin", ".txt", ".json", ".xml", ".yaml", ".yml", ".py", ".js", ".csv", ".heic", ".heif", ".docx", ".xlsx", ".zip"):
         suffix = ".bin"
     disk_path = UPLOAD_DIR / f"{file_id}{suffix}"
     with open(disk_path, "wb") as fh:

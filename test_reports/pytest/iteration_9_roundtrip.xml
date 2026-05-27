@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="3.519" timestamp="2026-05-27T09:46:32.938513+00:00" hostname="agent-env-1721fbc2-00d3-4136-9ab2-cb9fd70d73c9"><testcase classname="backend.tests.test_iteration9_roundtrip" name="test_full_roundtrip_all_gates" time="2.991" /><testcase classname="backend.tests.test_iteration9_roundtrip" name="test_regression_dashboard_cms_leads_login" time="0.205"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_iteration9_roundtrip.py:160: in test_regression_dashboard_cms_leads_login
+    assert r.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration9_roundtrip" name="test_legitimate_project_preserved" time="0.223" /></testsuite></testsuites>
