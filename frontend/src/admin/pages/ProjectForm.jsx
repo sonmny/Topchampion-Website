@@ -10,15 +10,17 @@ import { Megaphone } from "lucide-react";
 
 const INDUSTRIES = ["tire_mfg", "semiconductor", "power_generation", "auto_ev", "data_center", "other"];
 const PLCS = ["rockwell", "siemens", "schneider", "other"];
-const STATUSES = ["draft", "in_design", "in_production", "commissioning", "delivered", "archived"];
+const STATUSES = ["entry", "design", "procurement", "manufacturing", "testing", "shipping", "archived"];
 
 const empty = {
   name: "",
+  work_order_no: "",
   client_name: "",
   customer_user_id: "",
+  customer_email: "",
   industry: "",
   plc_brand: "",
-  status: "draft",
+  status: "entry",
   description: "",
   is_showcase: false,
   showcase_industry: "",
@@ -55,11 +57,13 @@ export const ProjectForm = ({ mode }) => {
           const { data } = await api.get(`/projects/${id}`);
           setForm({
             name: data.name || "",
+            work_order_no: data.work_order_no || "",
             client_name: data.client_name || "",
             customer_user_id: data.customer_user_id || "",
+            customer_email: data.customer_email || "",
             industry: data.industry || "",
             plc_brand: data.plc_brand || "",
-            status: data.status || "draft",
+            status: data.status || "entry",
             description: data.description || "",
             is_showcase: !!data.is_showcase,
             showcase_industry: data.showcase_industry || "",
@@ -83,8 +87,10 @@ export const ProjectForm = ({ mode }) => {
     e.preventDefault();
     const payload = {
       name: form.name.trim(),
+      work_order_no: form.work_order_no.trim() || null,
       client_name: form.client_name.trim() || null,
       customer_user_id: form.customer_user_id || null,
+      customer_email: form.customer_email.trim() || null,
       industry: form.industry || null,
       plc_brand: form.plc_brand || null,
       status: form.status,
@@ -137,8 +143,14 @@ export const ProjectForm = ({ mode }) => {
           <Field label={t.project_form.f_name + " *"}>
             <input data-testid="pf-name" required value={form.name} onChange={(e) => update("name", e.target.value)} className="industrial-input" />
           </Field>
+          <Field label={lang === "cn" ? "工令号" : "Work Order No."}>
+            <input data-testid="pf-work-order" value={form.work_order_no} onChange={(e) => update("work_order_no", e.target.value)} placeholder="TC-2025-0001" className="industrial-input" />
+          </Field>
           <Field label={t.project_form.f_client}>
             <input data-testid="pf-client" value={form.client_name} onChange={(e) => update("client_name", e.target.value)} className="industrial-input" />
+          </Field>
+          <Field label={lang === "cn" ? "客户邮箱(用于自动开通账号 + 阶段通知)" : "Customer Email (auto-account + stage emails)"}>
+            <input data-testid="pf-customer-email" type="email" value={form.customer_email} onChange={(e) => update("customer_email", e.target.value)} placeholder="customer@example.com" className="industrial-input" />
           </Field>
 
           <Field label={t.project_form.f_customer}>

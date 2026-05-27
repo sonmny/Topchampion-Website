@@ -1,0 +1,67 @@
+{
+  "summary": "Phase 11 Project Management workflow upgrade tested. Backend pytest: 4/7 pass, 3 fail revealing 2 BLOCKING bugs + 1 cascading failure. Frontend admin UI smoke confirms NotificationBell, pf-work-order, pf-customer-email, 7-value status dropdown, and admin /portal→/admin guard work. (A) Migration ✅ — legacy 'in_production' → 'manufacturing' for the single existing project (id=5b138ec0..., status='manufacturing'). (D) Customer auto-provisioning ✅ — POST /projects/{id}/customer-account creates user, returns temp_password, email_sent=false with correct 'Email pipeline disabled' notice; idempotent on repeat. 422 returned when customer_email missing. (E) In-app notifications ✅ — customer_welcome persists, GET/POST-read/read-all all work. Customer-scoped project list shows only their own. (K) Dashboard regression ✅. ❌ (B) Stage gating: CANNOT validate properly because of bug #1. design→procurement approve was wrongly allowed because the uploaded 'approval_drawing' silently became 'drawing'. ❌ (C) Materials CRUD: POST /materials returns 500 (Mongo refuses $push when customer_materials is null). ❌ (F) New file categories: ALL 6 new categories silently coerced to 'drawing'.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/projects/{pid}/files",
+        "issue": "server.py L996-997 hard-coerces ANY category not in legacy set ('code','drawing','photo') to 'drawing'. This silently destroys all 6 new workflow categories (approval_drawing, design_input, design_output, as_built_drawing, product_photo, inspection_report). Therefore stage requirements in validate_stage_requirements() can NEVER be satisfied via the API, so approve-advance always passes the file-category checks accidentally (because the required category never appears in files[], yet the legacy check skips). Fix: change condition to `if category not in (\"code\",\"drawing\",\"photo\",\"approval_drawing\",\"design_input\",\"design_output\",\"as_built_drawing\",\"product_photo\",\"inspection_report\"): category = \"drawing\"` (or just trust the Pydantic Literal on the ProjectFile model).",
+        "priority": "CRITICAL"
+      },
+      {
+        "endpoint": "POST /api/projects/{pid}/materials",
+        "issue": "Returns 500 — pymongo WriteError: 'field customer_materials must be an array but is of type null'. Existing projects (and projects created without explicitly passing customer_materials=[]) have customer_materials=null in Mongo, so $push fails. Fix options: (1) in create_project, default doc['customer_materials'] = [] when None; (2) in add_customer_material, do an upfront `update_one(... $set {customer_materials: []}, upsert filter `customer_materials: null` first; (3) use $setOnInsert + $push semantics or normalise the field in on_startup migration.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "POST /api/projects/{pid}/approve-advance",
+        "issue": "Because of the category coercion bug, the design→procurement requirement (needs an approval_drawing) is never actually testable end-to-end via the public API. validate_stage_requirements() does iterate files looking for category=='approval_drawing' correctly, but no upload ever achieves that category. The 'unmet requirements' 409 path was confirmed working when no file is uploaded; the 'satisfied' path can't be reached until bug #1 is fixed."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Project detail UI customer-supplied materials add",
+        "issue": "addMaterial in ProjectDetail.jsx will surface a 500 error toast because POST /materials returns 500 (see backend bug #2). UI cannot be verified end-to-end until that backend bug is fixed.",
+        "affected_selectors": ["[data-testid=\"customer-materials-card\"]"]
+      },
+      {
+        "flow": "Project detail PhaseFileSection upload buttons",
+        "issue": "All 6 phase upload inputs (file-input-approval_drawing, file-input-design_input, file-input-design_output, file-input-as_built_drawing, file-input-product_photo, file-input-inspection_report) will upload successfully but the server persists category='drawing', so the file will not appear in its categorised PhaseFileSection list — it will fall into the legacy drawings section instead, AND stage advances that depend on the category will remain blocked (bug #1)."
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration8.py",
+    "/app/test_reports/pytest/iteration_8_results.xml"
+  ],
+  "action_items": [
+    "FIX server.py L996-997: allow all 9 valid categories (3 legacy + 6 new) in upload_project_file. The Pydantic ProjectFile model already lists them — just don't downgrade them at the route handler.",
+    "FIX POST /materials 500: initialise customer_materials=[] on project creation (default in create_project's doc) AND migrate existing null values on startup with db.projects.update_many({customer_materials: null}, {$set: {customer_materials: []}}). The single existing project (id=5b138ec0…) currently has customer_materials=null in DB.",
+    "After both fixes, re-run /app/backend/tests/test_iteration8.py — all 7 should pass and stage-gating round-trip becomes verifiable.",
+    "(Optional) Lock category at the Pydantic layer in upload route signature (Literal) so future deviations 422 instead of silently coercing."
+  ],
+  "critical_code_review_comments": [
+    "Two issues both stem from the same anti-pattern: silently coercing/swallowing invalid data instead of validating. The Pydantic ProjectFile model carefully enumerates 9 categories, but the upload route immediately overrides with 'drawing' — defeating the model entirely. Prefer FastAPI's `category: Literal[...]` in the Form() signature.",
+    "customer_materials null vs missing — typical Mongo gotcha. The CustomerMaterial list field needs an initial value [] on creation. Same advice applies to status_history and files (those happened to work because they're explicitly initialised in create_project, but customer_materials is not).",
+    "approve_status_advance correctly maps legacy→canonical pending values and calls validate_stage_requirements with the canonical 'to' status. The validator logic is right; only the upstream upload coercion breaks it.",
+    "Notification persistence is solid: in-app notifications are stored even when RESEND_API_KEY is empty (confirmed). The customer_welcome + stage_complete kind values surface correctly via GET /notifications.",
+    "Customer-account provisioning is idempotent and returns clear notice 'Email pipeline disabled' when RESEND_API_KEY missing — as specified.",
+    "ProjectDetail.jsx UI wiring (CustomerAccessCard, CustomerMaterialsCard, 6× PhaseFileSection) is correctly using data-testid names matching the spec. No frontend code defects found."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration8.py (new — 7 cases)",
+    "/app/test_reports/pytest/iteration_8_results.xml"
+  ],
+  "success_rate": {"backend": "57% (4/7)", "frontend": "smoke-only; admin UI elements verified, customer portal not reachable due to limited time"},
+  "test_credentials": "admin/Topchampion (verified). Customer accounts created during test_d are cleaned up via DELETE /api/users/{id}. No leftover users.",
+  "seed_data_creation": "TEST_R8_* projects/users created and deleted by fixtures. Two artefacts may remain if pytest was killed: TEST_R8_phase11 (with files), TEST_R8_gates (with approval_drawing in design status). Recommend the main agent re-runs cleanup with: requests.get/delete on any project whose name starts with 'TEST_R8'. The single legitimate existing project (id=5b138ec0-f769-418f-ad83-87fbdca01d99, name='1') is preserved at status='manufacturing' as expected.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run: pytest /app/backend/tests/test_iteration8.py -v. After main agent fixes the two backend bugs (file-category coercion + customer_materials null), all 7 tests should pass. Then add a full round-trip test: upload approval_drawing → request-advance design→procurement → approve-advance (should 200) → POST material supplied=false → request-advance procurement→manufacturing → approve-advance (should 409) → PATCH material supplied=true → approve-advance (should 200). Frontend retest should focus on /portal as a fresh customer (login with the temp_password returned by POST /projects/{id}/customer-account).",
+  "rca_of_the_issue": "BUG #1 — File category silently coerced. ROOT CAUSE: /app/backend/server.py line 996: `if category not in (\"code\", \"drawing\", \"photo\"): category = \"drawing\"`. REPRODUCE: POST /api/projects/{pid}/files with category=approval_drawing → response has category='drawing'. MITIGATION: extend the tuple to include all 6 new categories, OR delete the line entirely and rely on the Pydantic Literal on ProjectFile.category. BUG #2 — Materials 500. ROOT CAUSE: Mongo $push fails when the target field is null (vs missing/array). The create_project handler does not initialise customer_materials (defaults to None from Pydantic). REPRODUCE: create project, then POST /materials → 500. MITIGATION: in create_project handler, `if doc.get('customer_materials') is None: doc['customer_materials'] = []`. Also run on_startup once: `db.projects.update_many({'customer_materials': None}, {'$set': {'customer_materials': []}})`."
+}

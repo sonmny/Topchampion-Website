@@ -35,6 +35,7 @@ import { UsersList } from "./admin/pages/UsersList";
 import { AdminProfile } from "./admin/pages/AdminProfile";
 import { LeadsList, LeadDetail } from "./admin/pages/LeadsAdmin";
 import { SiteContentAdmin } from "./admin/pages/SiteContent";
+import { CustomerPortal } from "./admin/pages/CustomerPortal";
 import { HelmetProvider } from "react-helmet-async";
 import { SEO } from "./seo/SEO";
 import { organizationSchema, websiteSchema } from "./seo/seoConfig";
@@ -84,6 +85,7 @@ function App() {
 
             {/* Admin */}
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/portal" element={<ProtectedRoute><CustomerPortal /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/projects" element={<ProtectedRoute><ProjectsList /></ProtectedRoute>} />
             <Route path="/admin/projects/new" element={<ProtectedRoute allowed={["admin"]}><ProjectForm mode="new" /></ProtectedRoute>} />

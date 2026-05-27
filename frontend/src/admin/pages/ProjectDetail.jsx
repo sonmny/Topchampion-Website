@@ -21,6 +21,13 @@ export const ProjectDetail = () => {
   const fileDrawRef = useRef(null);
   const fileCodeRef = useRef(null);
   const filePhotoRef = useRef(null);
+  // refs for new phase-bound categories
+  const approvalRef = useRef(null);
+  const designInRef = useRef(null);
+  const designOutRef = useRef(null);
+  const asBuiltRef = useRef(null);
+  const prodPhotoRef = useRef(null);
+  const inspRef = useRef(null);
   const isAdmin = user?.role === "admin";
   const canManageFiles = isAdmin || (user?.permissions || []).includes("manage_files");
   const canRequestAdvance = isAdmin || (user?.permissions || []).includes("edit_projects") || (user?.permissions || []).includes("view_progress");
@@ -136,13 +143,24 @@ export const ProjectDetail = () => {
   }
 
   const files = p.files || [];
+  // Legacy categories (kept for backward compat)
   const photos = files.filter((f) => f.category === "photo");
   const drawings = files.filter((f) => f.category === "drawing");
   const codes = files.filter((f) => f.category === "code");
+  // New phase-bound categories
+  const approvalDrawings = files.filter((f) => f.category === "approval_drawing");
+  const designInputs = files.filter((f) => f.category === "design_input");
+  const designOutputs = files.filter((f) => f.category === "design_output");
+  const asBuiltDrawings = files.filter((f) => f.category === "as_built_drawing");
+  const productPhotos = files.filter((f) => f.category === "product_photo");
+  const inspectionReports = files.filter((f) => f.category === "inspection_report");
   const canShowcase = isAdmin || user?.role === "user";
 
-  const STATUS_FLOW = ["draft", "in_design", "in_production", "commissioning", "delivered", "archived"];
-  const currentStatusIdx = STATUS_FLOW.indexOf(p.status || "draft");
+  const STATUS_FLOW = ["entry", "design", "procurement", "manufacturing", "testing", "shipping", "archived"];
+  // Map legacy values defensively so existing pages keep working
+  const LEGACY_TO_NEW = { draft: "entry", in_design: "design", in_production: "manufacturing", commissioning: "testing", delivered: "shipping" };
+  const normalizedStatus = LEGACY_TO_NEW[p.status] || p.status || "entry";
+  const currentStatusIdx = STATUS_FLOW.indexOf(normalizedStatus);
   const nextStatus = currentStatusIdx >= 0 && currentStatusIdx < STATUS_FLOW.length - 1 ? STATUS_FLOW[currentStatusIdx + 1] : null;
 
   const requestAdvance = async (toStatus, note) => {
@@ -171,6 +189,47 @@ export const ProjectDetail = () => {
     } catch (e) {
       toast.error(formatApiError(e));
     }
+  };
+
+  // Provision a customer login for this project (uses project.customer_email)
+  const provisionCustomer = async () => {
+    if (!p.customer_email) {
+      toast.error(lang === "cn" ? "请先在项目设置中填写客户邮箱" : "Set customer_email in project settings first");
+      return;
+    }
+    try {
+      const { data } = await api.post(`/projects/${id}/customer-account`, {});
+      // Show credentials inline so business can relay manually if Resend disabled
+      const msg = data.email_sent
+        ? (lang === "cn" ? `已创建账号并发送邮件至 ${data.email}` : `Account created and email sent to ${data.email}`)
+        : (lang === "cn"
+            ? `账号:${data.username} · 临时密码:${data.temporary_password}(邮件管道未配置)`
+            : `Account: ${data.username} · Temp password: ${data.temporary_password} (email pipeline disabled)`);
+      toast.success(msg, { duration: 12000 });
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+
+  // Add/toggle a customer-supplied material entry
+  const addMaterial = async (name, note = "") => {
+    if (!name?.trim()) return;
+    try {
+      await api.post(`/projects/${id}/materials`, { name: name.trim(), note, supplied: false });
+      load();
+    } catch (e) { toast.error(formatApiError(e)); }
+  };
+  const toggleMaterial = async (mat) => {
+    try {
+      await api.patch(`/projects/${id}/materials/${mat.id}`, { name: mat.name, note: mat.note || "", supplied: !mat.supplied });
+      load();
+    } catch (e) { toast.error(formatApiError(e)); }
+  };
+  const deleteMaterial = async (mat) => {
+    if (!window.confirm(lang === "cn" ? `确认删除甲供料"${mat.name}"?` : `Delete material "${mat.name}"?`)) return;
+    try { await api.delete(`/projects/${id}/materials/${mat.id}`); load(); }
+    catch (e) { toast.error(formatApiError(e)); }
   };
 
   return (
@@ -236,6 +295,8 @@ export const ProjectDetail = () => {
           )}
           <div className="bg-[#0A0A0A] p-7 flex flex-col gap-3">
             <MetaLine label={t.projects.th.client} value={p.client_name || "—"} />
+            {p.work_order_no && <MetaLine label={lang === "cn" ? "工令号" : "Work Order"} value={p.work_order_no} />}
+            {p.customer_email && <MetaLine label={lang === "cn" ? "客户邮箱" : "Customer Email"} value={p.customer_email} />}
             <MetaLine label={t.projects.th.updated} value={new Date(p.updated_at).toLocaleString()} />
           </div>
         </div>
@@ -254,6 +315,88 @@ export const ProjectDetail = () => {
           onApprove={approveAdvance}
           onReject={rejectAdvance}
         />
+
+        {/* Customer access — admin-only, only shows if customer_email is set */}
+        {isAdmin && (
+          <CustomerAccessCard p={p} lang={lang} onProvision={provisionCustomer} />
+        )}
+
+        {/* Customer-supplied materials (甲供料) — required before procurement → manufacturing */}
+        <CustomerMaterialsCard
+          materials={p.customer_materials || []}
+          canEdit={isAdmin || (user?.permissions || []).includes("edit_projects")}
+          onAdd={addMaterial}
+          onToggle={toggleMaterial}
+          onDelete={deleteMaterial}
+          lang={lang}
+        />
+
+        {/* Phase deliverables — 6-stage workflow file uploads */}
+        <div className="mt-12">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="w-7 h-px bg-[#C9A063]" />
+            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063]">
+              {lang === "cn" ? "各阶段交付物 / Phase Deliverables" : "Phase Deliverables"}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PhaseFileSection
+              category="approval_drawing" items={approvalDrawings}
+              titleCn="承认图 (设计录入)" titleEn="Approval Drawing"
+              stageHintCn="设计阶段需上传" stageHintEn="Required for Design stage"
+              canManage={canManageFiles} uploadingActive={uploading === "approval_drawing"}
+              fileRef={approvalRef} accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg"
+              onPick={() => approvalRef.current?.click()} onDelete={delFile} onRename={renameFile} onDownload={download} t={t} lang={lang}
+            />
+            <PhaseFileSection
+              category="design_input" items={designInputs}
+              titleCn="设计输入 (业务录入)" titleEn="Design Input"
+              stageHintCn="项目录入/设计起始" stageHintEn="Order entry / design kickoff"
+              canManage={canManageFiles} uploadingActive={uploading === "design_input"}
+              fileRef={designInRef} accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg,.docx,.xlsx"
+              onPick={() => designInRef.current?.click()} onDelete={delFile} onRename={renameFile} onDownload={download} t={t} lang={lang}
+            />
+            <PhaseFileSection
+              category="design_output" items={designOutputs}
+              titleCn="设计输出 (设计录入)" titleEn="Design Output"
+              stageHintCn="设计阶段完成时录入" stageHintEn="Submit at end of Design stage"
+              canManage={canManageFiles} uploadingActive={uploading === "design_output"}
+              fileRef={designOutRef} accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg,.docx,.xlsx,.zip"
+              onPick={() => designOutRef.current?.click()} onDelete={delFile} onRename={renameFile} onDownload={download} t={t} lang={lang}
+            />
+            <PhaseFileSection
+              category="product_photo" items={productPhotos}
+              titleCn="产品照片 (品检录入)" titleEn="Product Photo"
+              stageHintCn="测试阶段必上传" stageHintEn="Required for Testing stage"
+              canManage={canManageFiles} uploadingActive={uploading === "product_photo"}
+              fileRef={prodPhotoRef} accept=".png,.jpg,.jpeg,.webp,.heic,.heif"
+              onPick={() => prodPhotoRef.current?.click()} onDelete={delFile} onRename={renameFile} onDownload={download} t={t} lang={lang}
+            />
+            <PhaseFileSection
+              category="inspection_report" items={inspectionReports}
+              titleCn="检验报告 (品检录入)" titleEn="Inspection Report"
+              stageHintCn="测试阶段必上传" stageHintEn="Required for Testing stage"
+              canManage={canManageFiles} uploadingActive={uploading === "inspection_report"}
+              fileRef={inspRef} accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg"
+              onPick={() => inspRef.current?.click()} onDelete={delFile} onRename={renameFile} onDownload={download} t={t} lang={lang}
+            />
+            <PhaseFileSection
+              category="as_built_drawing" items={asBuiltDrawings}
+              titleCn="竣工图 (设计录入)" titleEn="As-Built Drawing"
+              stageHintCn="出厂前必上传" stageHintEn="Required before Archive"
+              canManage={canManageFiles} uploadingActive={uploading === "as_built_drawing"}
+              fileRef={asBuiltRef} accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg,.zip"
+              onPick={() => asBuiltRef.current?.click()} onDelete={delFile} onRename={renameFile} onDownload={download} t={t} lang={lang}
+            />
+          </div>
+        </div>
+        {/* Hidden file inputs for new categories */}
+        <input ref={approvalRef} type="file" hidden onChange={onUpload("approval_drawing")} data-testid="file-input-approval_drawing" accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg" />
+        <input ref={designInRef} type="file" hidden onChange={onUpload("design_input")} data-testid="file-input-design_input" accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg,.docx,.xlsx" />
+        <input ref={designOutRef} type="file" hidden onChange={onUpload("design_output")} data-testid="file-input-design_output" accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg,.docx,.xlsx,.zip" />
+        <input ref={prodPhotoRef} type="file" hidden onChange={onUpload("product_photo")} data-testid="file-input-product_photo" accept=".png,.jpg,.jpeg,.webp,.heic,.heif" />
+        <input ref={inspRef} type="file" hidden onChange={onUpload("inspection_report")} data-testid="file-input-inspection_report" accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg" />
+        <input ref={asBuiltRef} type="file" hidden onChange={onUpload("as_built_drawing")} data-testid="file-input-as_built_drawing" accept=".pdf,.png,.jpg,.jpeg,.webp,.dwg,.zip" />
 
         {/* Photos section */}
         <div className="mt-12">
@@ -334,8 +477,20 @@ export const ProjectDetail = () => {
 };
 
 // ---------------- Status workflow card ----------------
-const STAGE_LABEL_CN = { draft: "草稿", in_design: "设计中", in_production: "生产中", commissioning: "调试中", delivered: "已交付", archived: "已归档" };
-const STAGE_LABEL_EN = { draft: "Draft", in_design: "In Design", in_production: "In Production", commissioning: "Commissioning", delivered: "Delivered", archived: "Archived" };
+const STAGE_LABEL_CN = {
+  // legacy values (kept so old data still renders)
+  draft: "草稿", in_design: "设计中", in_production: "生产中", commissioning: "调试中", delivered: "已交付",
+  // canonical 6-stage flow
+  entry: "项目录入", design: "设计阶段", procurement: "备料阶段",
+  manufacturing: "制造阶段", testing: "测试阶段", shipping: "包装出厂",
+  archived: "已归档",
+};
+const STAGE_LABEL_EN = {
+  draft: "Draft", in_design: "In Design", in_production: "In Production", commissioning: "Commissioning", delivered: "Delivered",
+  entry: "Order Entry", design: "Design", procurement: "Procurement",
+  manufacturing: "Manufacturing", testing: "Testing", shipping: "Shipping",
+  archived: "Archived",
+};
 
 const ProjectStatusCard = ({ p, isAdmin, canRequestAdvance, nextStatus, STATUS_FLOW, currentStatusIdx, t, lang, onRequest, onApprove, onReject }) => {
   const L = lang === "cn" ? STAGE_LABEL_CN : STAGE_LABEL_EN;
@@ -661,6 +816,207 @@ const FileCard = ({ file, category, isAdmin, onDelete, onDownload, onRename, t }
           )}
         </div>
       </div>
+    </div>
+  );
+};
+
+
+// ---------------- Phase deliverable file section (reuses existing FileSection card layout) ----------------
+const PhaseFileSection = ({
+  category, items, titleCn, titleEn, stageHintCn, stageHintEn,
+  canManage, uploadingActive, accept, onPick, onDelete, onRename, onDownload, t, lang,
+}) => {
+  const title = lang === "cn" ? titleCn : titleEn;
+  const hint = lang === "cn" ? stageHintCn : stageHintEn;
+  return (
+    <section data-testid={`phase-section-${category}`} className="bg-[#0A0A0A] border border-white/10">
+      <header className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+        <div>
+          <div className="text-sm font-bold text-white">{title}</div>
+          <div className="text-[11px] text-zinc-500 mt-0.5">{hint}{items.length > 0 ? ` · ${items.length}` : ""}</div>
+        </div>
+        {canManage && (
+          <button
+            onClick={onPick}
+            disabled={uploadingActive}
+            data-testid={`upload-${category}`}
+            className="inline-flex items-center gap-1.5 h-9 px-3 border border-[#C9A063]/40 text-[#C9A063] hover:bg-[#C9A063] hover:text-black text-xs font-semibold tracking-wide transition-colors disabled:opacity-50"
+          >
+            <Upload size={13} /> {uploadingActive ? t.project_detail.uploading : (lang === "cn" ? "上传" : "Upload")}
+          </button>
+        )}
+      </header>
+      <div className="p-4">
+        {items.length === 0 ? (
+          <div className="text-center text-[11px] text-zinc-600 italic py-6">
+            {lang === "cn" ? "暂无文件" : "No files yet"}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {items.map((f) => (
+              <PhaseFileCard
+                key={f.id} file={f} canManage={canManage}
+                onDelete={onDelete} onRename={onRename} onDownload={onDownload}
+                lang={lang}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const PhaseFileCard = ({ file, canManage, onDelete, onRename, onDownload, lang }) => {
+  const isImage = (file.content_type || "").startsWith("image/");
+  return (
+    <div className="bg-[#070707] border border-white/5 flex flex-col" data-testid={`phase-file-${file.id}`}>
+      <div className="aspect-square bg-white/[0.02] flex items-center justify-center overflow-hidden">
+        {file.thumb_b64 ? (
+          <img src={file.thumb_b64} alt={file.filename} className="w-full h-full object-cover" />
+        ) : isImage ? (
+          <FileImage size={28} className="text-zinc-600" />
+        ) : (
+          <FileText size={28} className="text-zinc-600" />
+        )}
+      </div>
+      <div className="p-2.5 flex flex-col gap-1.5">
+        <div className="text-[11px] text-white truncate" title={file.display_name || file.filename}>
+          {file.display_name || file.filename}
+        </div>
+        {file.uploaded_by_name && (
+          <div className="text-[10px] text-zinc-500 truncate" data-testid={`phase-uploader-${file.id}`}>
+            {file.uploaded_by_name} · {new Date(file.uploaded_at).toLocaleDateString()}
+          </div>
+        )}
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => onDownload(file)} className="flex-1 inline-flex items-center justify-center h-7 border border-white/10 hover:border-[#C9A063] text-zinc-300 hover:text-[#C9A063] text-[10px] transition-colors" data-testid={`download-${file.id}`}>
+            <Download size={11} />
+          </button>
+          {canManage && (
+            <>
+              <button onClick={() => { const n = window.prompt(lang === "cn" ? "重命名" : "Rename", file.display_name || file.filename); if (n) onRename(file.id, n); }} className="inline-flex items-center justify-center w-7 h-7 border border-white/10 hover:border-[#C9A063] text-zinc-300 hover:text-[#C9A063] transition-colors" data-testid={`rename-${file.id}`}>
+                <Pencil size={11} />
+              </button>
+              <button onClick={() => onDelete(file.id)} className="inline-flex items-center justify-center w-7 h-7 border border-white/10 hover:border-red-400 hover:text-red-300 text-zinc-300 transition-colors" data-testid={`del-${file.id}`}>
+                <Trash2 size={11} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ---------------- Customer-access card (admin-only) ----------------
+const CustomerAccessCard = ({ p, lang, onProvision }) => {
+  if (!p.customer_email) {
+    return (
+      <div className="mt-6 bg-[#0A0A0A] border border-white/10 p-5 flex items-center justify-between gap-4" data-testid="customer-access-card">
+        <div className="flex-1 min-w-0">
+          <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-zinc-500 mb-1">
+            {lang === "cn" ? "客户访问" : "Customer Access"}
+          </div>
+          <div className="text-sm text-zinc-400">
+            {lang === "cn" ? "项目尚未设置客户邮箱。在「编辑」中填写后,可一键生成客户登录账号。" : "Add a customer_email in Edit to provision a customer login."}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-6 bg-[#0A0A0A] border border-white/10 p-5 flex items-center justify-between gap-4 flex-wrap" data-testid="customer-access-card">
+      <div className="flex-1 min-w-0">
+        <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063] mb-1">
+          {lang === "cn" ? "客户访问" : "Customer Access"}
+        </div>
+        <div className="text-sm text-white">
+          {lang === "cn" ? "客户邮箱:" : "Customer email:"} <span className="font-mono">{p.customer_email}</span>
+        </div>
+        <div className="text-[11px] text-zinc-500 mt-1">
+          {p.customer_user_id
+            ? (lang === "cn" ? "已开通账号,阶段更新时自动通知。" : "Account active — notified on each stage update.")
+            : (lang === "cn" ? "尚未开通账号,点击右侧按钮自动创建并发送凭据。" : "No account yet — click to provision and send credentials.")}
+        </div>
+      </div>
+      {!p.customer_user_id && (
+        <button
+          onClick={onProvision}
+          data-testid="provision-customer-btn"
+          className="inline-flex items-center gap-1.5 h-9 px-4 bg-[#0F6B3F] hover:bg-[#1A8A52] text-white text-xs font-semibold tracking-wide transition-colors"
+        >
+          {lang === "cn" ? "开通客户账号" : "Provision account"}
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ---------------- Customer-supplied materials (甲供料) ----------------
+const CustomerMaterialsCard = ({ materials, canEdit, onAdd, onToggle, onDelete, lang }) => {
+  const [newName, setNewName] = useState("");
+  return (
+    <div className="mt-6 bg-[#0A0A0A] border border-white/10" data-testid="customer-materials-card">
+      <header className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-wrap gap-3">
+        <div>
+          <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#C9A063]">
+            {lang === "cn" ? "甲供料清单" : "Customer-Supplied Materials"}
+          </div>
+          <div className="text-[11px] text-zinc-500 mt-0.5">
+            {lang === "cn" ? "全部勾选到货后,方可推进至「制造阶段」" : "All items must be marked supplied before advancing to Manufacturing"}
+          </div>
+        </div>
+        {canEdit && (
+          <form
+            onSubmit={(e) => { e.preventDefault(); onAdd(newName); setNewName(""); }}
+            className="flex items-center gap-2"
+          >
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder={lang === "cn" ? "新增材料名" : "New material name"}
+              data-testid="material-input"
+              className="bg-[#070707] border border-white/10 px-3 h-9 text-xs text-white focus:border-[#C9A063] outline-none w-48"
+            />
+            <button type="submit" data-testid="material-add-btn" className="h-9 px-3 border border-[#C9A063]/40 text-[#C9A063] hover:bg-[#C9A063] hover:text-black text-xs font-semibold tracking-wide transition-colors">
+              {lang === "cn" ? "添加" : "Add"}
+            </button>
+          </form>
+        )}
+      </header>
+      {materials.length === 0 ? (
+        <div className="px-5 py-6 text-center text-[11px] text-zinc-600 italic">
+          {lang === "cn" ? "暂无甲供料 — 推进至制造阶段时无需等待。" : "None — no customer-supplied materials required."}
+        </div>
+      ) : (
+        <ul className="divide-y divide-white/5" data-testid="materials-list">
+          {materials.map((m) => (
+            <li key={m.id} className="flex items-center gap-3 px-5 py-3" data-testid={`material-${m.id}`}>
+              <input
+                type="checkbox"
+                checked={!!m.supplied}
+                onChange={() => canEdit && onToggle(m)}
+                disabled={!canEdit}
+                className="w-4 h-4 accent-[#0F6B3F]"
+                data-testid={`material-check-${m.id}`}
+              />
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm ${m.supplied ? "text-zinc-500 line-through" : "text-white"}`}>{m.name}</div>
+                {m.note && <div className="text-[11px] text-zinc-500 mt-0.5">{m.note}</div>}
+              </div>
+              {m.supplied && m.supplied_at && (
+                <span className="font-mono text-[10px] text-[#1A8A52]">{new Date(m.supplied_at).toLocaleDateString()}</span>
+              )}
+              {canEdit && (
+                <button onClick={() => onDelete(m)} className="text-zinc-500 hover:text-red-400" data-testid={`material-del-${m.id}`}>
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };

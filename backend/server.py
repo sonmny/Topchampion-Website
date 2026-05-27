@@ -26,7 +26,7 @@ try:
 except Exception:
     PIL_AVAILABLE = False
 
-from notifications import send_new_lead_email
+from notifications import send_new_lead_email, send_customer_welcome_email, send_stage_complete_email
 from cms import register_cms_routes, seed_cms_defaults
 
 
@@ -174,7 +174,14 @@ class ProjectFile(BaseModel):
     id: str
     filename: str
     display_name: Optional[str] = None
-    category: Literal["code", "drawing", "photo"] = "drawing"
+    # category covers both legacy ('code', 'drawing', 'photo') and the new 6-stage workflow
+    # categories ('approval_drawing', 'design_input', 'design_output', 'as_built_drawing',
+    # 'product_photo', 'inspection_report'). Any extension is treated as a generic 'drawing'.
+    category: Literal[
+        "code", "drawing", "photo",
+        "approval_drawing", "design_input", "design_output",
+        "as_built_drawing", "product_photo", "inspection_report",
+    ] = "drawing"
     size: int
     content_type: str
     uploaded_at: datetime
@@ -195,18 +202,50 @@ class StatusEvent(BaseModel):
     at: datetime
 
 
+class CustomerMaterial(BaseModel):
+    """Customer-supplied (甲供料) material expected for procurement stage."""
+    id: str
+    name: str = Field(..., max_length=200)
+    note: Optional[str] = Field(None, max_length=400)
+    supplied: bool = False
+    supplied_at: Optional[datetime] = None
+
+
+# 6-stage workflow + the legacy 5-stage enum kept as a union for backward compat.
+# Migration on startup maps legacy values to the new 6-stage flow.
+STAGE_FLOW = ["entry", "design", "procurement", "manufacturing", "testing", "shipping", "archived"]
+STAGE_LEGACY_MAP = {
+    "draft": "entry",
+    "in_design": "design",
+    "in_production": "manufacturing",
+    "commissioning": "testing",
+    "delivered": "shipping",
+    "archived": "archived",
+}
+
+
 class ProjectIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
+    work_order_no: Optional[str] = Field(None, max_length=80)  # 工令号
     client_name: Optional[str] = Field(None, max_length=200)
     customer_user_id: Optional[str] = None  # owning customer (visible to that user)
+    customer_email: Optional[EmailStr] = None  # for auto-account creation + notifications
     industry: Optional[Literal["tire_mfg", "semiconductor", "power_generation", "auto_ev", "data_center", "bess", "other"]] = None
     plc_brand: Optional[Literal["rockwell", "siemens", "schneider", "other"]] = None
-    status: Optional[Literal["draft", "in_design", "in_production", "commissioning", "delivered", "archived"]] = "draft"
-    pending_status: Optional[Literal["in_design", "in_production", "commissioning", "delivered", "archived"]] = None
+    status: Optional[Literal[
+        "entry", "design", "procurement", "manufacturing", "testing", "shipping", "archived",
+        # legacy values still accepted on the wire — auto-mapped on read
+        "draft", "in_design", "in_production", "commissioning", "delivered",
+    ]] = "entry"
+    pending_status: Optional[Literal[
+        "design", "procurement", "manufacturing", "testing", "shipping", "archived",
+        "in_design", "in_production", "commissioning", "delivered",
+    ]] = None
     status_history: Optional[List[StatusEvent]] = None
     description: Optional[str] = Field(None, max_length=4000)
-    parameters: Optional[dict] = None  # arbitrary key/value technical parameters (legacy, no longer editable from UI)
-    drawing_urls: Optional[List[str]] = None  # external drawing links (legacy, no longer editable from UI)
+    parameters: Optional[dict] = None  # arbitrary key/value technical parameters (legacy)
+    drawing_urls: Optional[List[str]] = None  # external drawing links (legacy)
+    customer_materials: Optional[List[CustomerMaterial]] = None  # 甲供料 list
     # Public showcase / case-study fields (editable by admin + user)
     is_showcase: Optional[bool] = False
     showcase_industry: Optional[str] = Field(None, max_length=120)
@@ -225,11 +264,18 @@ class ShowcaseUpdate(BaseModel):
 
 class FileUpdate(BaseModel):
     display_name: Optional[str] = Field(None, max_length=200)
-    category: Optional[Literal["code", "drawing", "photo"]] = None
+    category: Optional[Literal[
+        "code", "drawing", "photo",
+        "approval_drawing", "design_input", "design_output",
+        "as_built_drawing", "product_photo", "inspection_report",
+    ]] = None
 
 
 class StatusAdvanceRequest(BaseModel):
-    to_status: Literal["in_design", "in_production", "commissioning", "delivered", "archived"]
+    to_status: Literal[
+        "design", "procurement", "manufacturing", "testing", "shipping", "archived",
+        "in_design", "in_production", "commissioning", "delivered",
+    ]
     note: Optional[str] = Field(None, max_length=400)
 
 
@@ -289,6 +335,12 @@ async def _scoped_project_filter(current: dict) -> dict:
 async def on_startup():
     await db.users.create_index("username", unique=True)
     await db.projects.create_index("created_at")
+    await db.notifications.create_index([("user_id", 1), ("created_at", -1)])
+    # Migrate legacy project statuses (draft/in_design/in_production/commissioning/delivered → 6-stage flow)
+    for legacy, new in STAGE_LEGACY_MAP.items():
+        if legacy != new:  # archived → archived doesn't need rewriting
+            await db.projects.update_many({"status": legacy}, {"$set": {"status": new}})
+            await db.projects.update_many({"pending_status": legacy}, {"$set": {"pending_status": new}})
     # Seed CMS defaults (idempotent)
     await seed_cms_defaults(db)
     # Seed admin
@@ -605,6 +657,109 @@ async def delete_user(user_id: str, current: dict = Depends(require_admin)):
 api_router.include_router(users_router)
 
 
+# ---------------- Notifications (in-app) ----------------
+notifications_router = APIRouter(prefix="/notifications")
+
+
+class NotificationOut(BaseModel):
+    id: str
+    user_id: str
+    kind: str          # 'customer_welcome' | 'stage_complete' | 'material_requested' | ...
+    title: str
+    body: Optional[str] = None
+    project_id: Optional[str] = None
+    project_name: Optional[str] = None
+    stage: Optional[str] = None
+    read: bool = False
+    created_at: datetime
+
+
+async def push_notification(user_id: str, kind: str, title: str, body: str = "",
+                            project_id: Optional[str] = None,
+                            project_name: Optional[str] = None,
+                            stage: Optional[str] = None) -> None:
+    """Persist an in-app notification for a user."""
+    if not user_id:
+        return
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "kind": kind,
+        "title": title,
+        "body": body,
+        "project_id": project_id,
+        "project_name": project_name,
+        "stage": stage,
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.notifications.insert_one(dict(doc))
+
+
+@notifications_router.get("", response_model=List[NotificationOut])
+async def list_notifications(current=Depends(get_current_user)):
+    docs = await db.notifications.find({"user_id": current["id"]}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return [_serialize(d) for d in docs]
+
+
+@notifications_router.post("/{nid}/read", status_code=204)
+async def mark_notification_read(nid: str, current=Depends(get_current_user)):
+    res = await db.notifications.update_one({"id": nid, "user_id": current["id"]}, {"$set": {"read": True}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+
+
+@notifications_router.post("/read-all", status_code=204)
+async def mark_all_notifications_read(current=Depends(get_current_user)):
+    await db.notifications.update_many({"user_id": current["id"], "read": False}, {"$set": {"read": True}})
+
+
+api_router.include_router(notifications_router)
+
+
+# ---------------- Stage workflow rules ----------------
+STAGE_REQUIREMENTS = {
+    # Each pair (current → next) lists artifact categories that must be present, with friendly labels.
+    ("entry", "design"): [],
+    ("design", "procurement"): [("approval_drawing", "承认图 / Approval drawing")],
+    ("procurement", "manufacturing"): [],   # special-cased: customer_materials must all be supplied
+    ("manufacturing", "testing"): [],
+    ("testing", "shipping"): [
+        ("product_photo", "产品照片 / Product photo"),
+        ("inspection_report", "检验报告 / Inspection report"),
+    ],
+    ("shipping", "archived"): [("as_built_drawing", "竣工图 / As-built drawing")],
+}
+
+STAGE_LABEL_CN = {
+    "entry": "项目录入", "design": "设计阶段", "procurement": "备料阶段",
+    "manufacturing": "制造阶段", "testing": "测试阶段", "shipping": "包装出厂", "archived": "已归档",
+}
+
+
+def validate_stage_requirements(project: dict, to_status: str) -> Optional[str]:
+    """Returns an error message if requirements are unmet for advancing to `to_status`, else None."""
+    cur = STAGE_LEGACY_MAP.get(project.get("status") or "", project.get("status"))
+    nxt = STAGE_LEGACY_MAP.get(to_status, to_status)
+    key = (cur, nxt)
+    # Only enforce on the canonical 6-stage flow; permit any legacy → legacy advances unchecked.
+    if key not in STAGE_REQUIREMENTS:
+        return None
+    needed = STAGE_REQUIREMENTS[key]
+    files = project.get("files") or []
+    missing = [label for cat, label in needed if not any(f.get("category") == cat for f in files)]
+    # Special procurement → manufacturing rule: customer_materials all supplied
+    if cur == "procurement" and nxt == "manufacturing":
+        mats = project.get("customer_materials") or []
+        unsupplied = [m for m in mats if not m.get("supplied")]
+        if unsupplied:
+            names = ", ".join(m.get("name", "") for m in unsupplied[:3])
+            missing.append(f"甲供料未到齐 / Customer materials not yet supplied: {names}")
+    if missing:
+        return "进入下一阶段需先完成 / Required to advance: " + "; ".join(missing)
+    return None
+
+
 # ---------------- Projects ----------------
 projects_router = APIRouter(prefix="/projects")
 
@@ -620,11 +775,14 @@ async def list_projects(current=Depends(get_current_user)):
 async def create_project(payload: ProjectIn, current=Depends(require_admin)):
     now = datetime.now(timezone.utc).isoformat()
     doc = payload.model_dump()
+    # Auto-map legacy default into new flow
+    if doc.get("status") in STAGE_LEGACY_MAP:
+        doc["status"] = STAGE_LEGACY_MAP[doc["status"]]
     initial_event = {
         "id": str(uuid.uuid4()),
         "kind": "created",
         "from_status": None,
-        "to_status": doc.get("status") or "draft",
+        "to_status": doc.get("status") or "entry",
         "by_user_id": current["id"],
         "by_user_name": current.get("full_name") or current.get("username"),
         "note": None,
@@ -724,19 +882,25 @@ async def request_status_advance(pid: str, payload: StatusAdvanceRequest, curren
 
 
 @projects_router.post("/{pid}/approve-advance", response_model=ProjectOut)
-async def approve_status_advance(pid: str, payload: StatusReviewRequest, current: dict = Depends(require_admin)):
+async def approve_status_advance(pid: str, payload: StatusReviewRequest, background_tasks: BackgroundTasks, current: dict = Depends(require_admin)):
     doc = await db.projects.find_one({"id": pid}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Project not found")
     pend = doc.get("pending_status")
     if not pend:
         raise HTTPException(status_code=409, detail="No pending advance to approve")
+    # Map legacy values
+    pend_canonical = STAGE_LEGACY_MAP.get(pend, pend)
+    # Enforce stage requirements (artifacts + customer materials)
+    err = validate_stage_requirements(doc, pend_canonical)
+    if err:
+        raise HTTPException(status_code=409, detail=err)
     now = datetime.now(timezone.utc).isoformat()
     event = {
         "id": str(uuid.uuid4()),
         "kind": "approved",
         "from_status": doc.get("status"),
-        "to_status": pend,
+        "to_status": pend_canonical,
         "by_user_id": current["id"],
         "by_user_name": current.get("full_name") or current.get("username"),
         "note": payload.note,
@@ -745,11 +909,24 @@ async def approve_status_advance(pid: str, payload: StatusReviewRequest, current
     await db.projects.update_one(
         {"id": pid},
         {
-            "$set": {"status": pend, "pending_status": None, "updated_at": now},
+            "$set": {"status": pend_canonical, "pending_status": None, "updated_at": now},
             "$push": {"status_history": event},
         },
     )
     fresh = await db.projects.find_one({"id": pid}, {"_id": 0})
+    # Notify the assigned customer (in-app + email) — fire & forget
+    cust_id = fresh.get("customer_user_id")
+    cust_email = fresh.get("customer_email")
+    stage_cn = STAGE_LABEL_CN.get(pend_canonical, pend_canonical)
+    if cust_id:
+        background_tasks.add_task(
+            push_notification, cust_id, "stage_complete",
+            f"项目「{fresh.get('name','')}」阶段完成:{stage_cn}",
+            payload.note or "",
+            pid, fresh.get("name"), pend_canonical,
+        )
+    if cust_email:
+        background_tasks.add_task(send_stage_complete_email, fresh, pend_canonical, payload.note)
     return _serialize(fresh)
 
 
@@ -921,6 +1098,146 @@ async def update_showcase(pid: str, payload: ShowcaseUpdate, current=Depends(req
     await db.projects.update_one({"id": pid}, {"$set": upd})
     doc = await db.projects.find_one({"id": pid}, {"_id": 0})
     return _serialize(doc)
+
+
+import secrets
+import string
+
+class CustomerAccountResult(BaseModel):
+    user_id: str
+    username: str
+    temporary_password: str
+    email: str
+    email_sent: bool
+    notice: Optional[str] = None
+
+
+def _generate_password(length: int = 12) -> str:
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+@projects_router.post("/{pid}/customer-account", response_model=CustomerAccountResult)
+async def create_customer_account_for_project(pid: str, background_tasks: BackgroundTasks, current=Depends(require_admin)):
+    """Admin action: provision a customer user for the project's customer_email and assign them.
+
+    - Reuses the existing user when the email is already mapped to a customer.
+    - Generates a random initial password and returns it so the operator can relay manually
+      if the email pipeline is disabled.
+    """
+    project = await db.projects.find_one({"id": pid}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    email = (project.get("customer_email") or "").strip()
+    if not email:
+        raise HTTPException(status_code=422, detail="Project has no customer_email")
+
+    # Look up existing customer by username==email
+    existing = await db.users.find_one({"username": email}, {"_id": 0})
+    if existing:
+        user_id = existing["id"]
+        await db.projects.update_one({"id": pid}, {"$set": {"customer_user_id": user_id, "updated_at": datetime.now(timezone.utc).isoformat()}})
+        # Send a welcome notification (in-app + email) but with NO password since we don't have one
+        await push_notification(user_id, "customer_welcome",
+                                f"已分配新项目:{project.get('name','')}",
+                                "您已被分配到一个新项目,请登录后台查看进度。",
+                                pid, project.get("name"))
+        if email:
+            background_tasks.add_task(send_customer_welcome_email, email, existing.get("full_name") or email, None, project)
+        return {
+            "user_id": user_id, "username": email, "temporary_password": "(existing account · no password reset)",
+            "email": email, "email_sent": bool(os.environ.get("RESEND_API_KEY", "").strip()),
+            "notice": "Customer already had an account; the project has been assigned to them.",
+        }
+
+    # Create new customer
+    temp_password = _generate_password()
+    user_id = str(uuid.uuid4())
+    await db.users.insert_one({
+        "id": user_id,
+        "username": email,
+        "password_hash": hash_password(temp_password),
+        "full_name": project.get("client_name") or email.split("@")[0],
+        "role": "customer",
+        "department": None,
+        "permissions": [],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    await db.projects.update_one({"id": pid}, {"$set": {"customer_user_id": user_id, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    await push_notification(user_id, "customer_welcome",
+                            f"欢迎使用赛冠客户门户 · {project.get('name','')}",
+                            "您可以登录查看项目进度、下载资料与接收阶段提醒。",
+                            pid, project.get("name"))
+    email_sent_ok = bool(os.environ.get("RESEND_API_KEY", "").strip())
+    background_tasks.add_task(send_customer_welcome_email, email, project.get("client_name") or email, temp_password, project)
+    return {
+        "user_id": user_id, "username": email, "temporary_password": temp_password,
+        "email": email, "email_sent": email_sent_ok,
+        "notice": None if email_sent_ok else "RESEND_API_KEY 未配置 — 请手动告知客户登录凭据 / Email pipeline disabled; relay credentials manually.",
+    }
+
+
+class CustomerMaterialIn(BaseModel):
+    name: str = Field(..., max_length=200)
+    note: Optional[str] = Field(None, max_length=400)
+    supplied: bool = False
+
+
+@projects_router.post("/{pid}/materials", response_model=ProjectOut)
+async def add_customer_material(pid: str, payload: CustomerMaterialIn, current=Depends(get_current_user)):
+    if current.get("role") != "admin" and "edit_projects" not in (current.get("permissions") or []):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    project = await db.projects.find_one({"id": pid}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    mat = {
+        "id": str(uuid.uuid4()),
+        "name": payload.name.strip(),
+        "note": (payload.note or "").strip() or None,
+        "supplied": bool(payload.supplied),
+        "supplied_at": datetime.now(timezone.utc).isoformat() if payload.supplied else None,
+    }
+    await db.projects.update_one({"id": pid}, {"$push": {"customer_materials": mat}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}})
+    # Optional: notify customer that a customer-supplied material is requested
+    if not payload.supplied and project.get("customer_user_id"):
+        await push_notification(project["customer_user_id"], "material_requested",
+                                f"项目「{project.get('name','')}」需要您提供甲供料",
+                                f"材料:{mat['name']}", pid, project.get("name"))
+    fresh = await db.projects.find_one({"id": pid}, {"_id": 0})
+    return _serialize(fresh)
+
+
+@projects_router.patch("/{pid}/materials/{mat_id}", response_model=ProjectOut)
+async def update_customer_material(pid: str, mat_id: str, payload: CustomerMaterialIn, current=Depends(get_current_user)):
+    if current.get("role") != "admin" and "edit_projects" not in (current.get("permissions") or []):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    project = await db.projects.find_one({"id": pid}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    mats = project.get("customer_materials") or []
+    idx = next((i for i, m in enumerate(mats) if m.get("id") == mat_id), -1)
+    if idx < 0:
+        raise HTTPException(status_code=404, detail="Material not found")
+    upd = {
+        f"customer_materials.{idx}.name": payload.name.strip(),
+        f"customer_materials.{idx}.note": (payload.note or "").strip() or None,
+        f"customer_materials.{idx}.supplied": bool(payload.supplied),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if payload.supplied:
+        upd[f"customer_materials.{idx}.supplied_at"] = datetime.now(timezone.utc).isoformat()
+    await db.projects.update_one({"id": pid}, {"$set": upd})
+    fresh = await db.projects.find_one({"id": pid}, {"_id": 0})
+    return _serialize(fresh)
+
+
+@projects_router.delete("/{pid}/materials/{mat_id}", status_code=204)
+async def delete_customer_material(pid: str, mat_id: str, current=Depends(get_current_user)):
+    if current.get("role") != "admin" and "edit_projects" not in (current.get("permissions") or []):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    res = await db.projects.update_one({"id": pid}, {"$pull": {"customer_materials": {"id": mat_id}}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Project not found")
 
 
 api_router.include_router(projects_router)

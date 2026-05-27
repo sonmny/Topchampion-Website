@@ -16,9 +16,9 @@ export const AdminLogin = () => {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Already signed in → redirect
+  // Already signed in → redirect (customers → /portal, others → /admin)
   React.useEffect(() => {
-    if (user) navigate("/admin", { replace: true });
+    if (user) navigate(user.role === "customer" ? "/portal" : "/admin", { replace: true });
   }, [user, navigate]);
 
   const submit = async (e) => {
@@ -26,8 +26,8 @@ export const AdminLogin = () => {
     setErr("");
     setLoading(true);
     try {
-      await login(username.trim(), password);
-      navigate("/admin", { replace: true });
+      const u = await login(username.trim(), password);
+      navigate(u?.role === "customer" ? "/portal" : "/admin", { replace: true });
     } catch (e2) {
       const msg = e2?.response?.status === 401 ? t.login.error_invalid : formatApiError(e2, t.login.error_network);
       setErr(msg);
