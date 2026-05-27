@@ -100,6 +100,60 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
   - `/app/frontend/src/components/EngineeringCarousel.jsx`
   - `/app/backend/tests/test_iteration7.py`(15 cases)
 
+## Phase 11 (2026-02) — Multi-Role Project Management Workflow
+用户提出**完整的 7 项目管理升级**:从 6 阶段单一状态机重构为多角色工作流系统,每个阶段由不同部门(业务/设计/采购/制造/品检)录入对应资料,系统自动通知客户。
+### 用户决策 (2026-02)
+- (1) 自动发送邮件通知客户(Resend pipeline 在缺 KEY 时安全降级)
+- (2) 每个阶段必须录入对应资料才能推进
+- (3) 任何带 `edit_projects` 权限的人都可录入任何阶段
+- (4) 业务+采购都可标注甲供料
+- (5) 客户登录后看独立的客户门户 `/portal`
+### 后端
+- **新状态机**: `entry → design → procurement → manufacturing → testing → shipping → archived`(7 阶段) — 旧值通过 `STAGE_LEGACY_MAP` 自动迁移
+- **on_startup 迁移**: 旧项目 `in_production` 自动改为 `manufacturing` 等;`customer_materials: null` 自动改为 `[]`
+- **新字段** on Project: `work_order_no`(工令号), `customer_email`, `customer_materials: [{name, note, supplied, supplied_at}]`
+- **新文件分类**(9 种): legacy code/drawing/photo + approval_drawing(承认图) / design_input(设计输入) / design_output(设计输出) / as_built_drawing(竣工图) / product_photo(产品照片) / inspection_report(检验报告)
+- **阶段门控** `STAGE_REQUIREMENTS` + `validate_stage_requirements()`:
+  - design→procurement: 必须有 approval_drawing
+  - procurement→manufacturing: customer_materials 全部 supplied=True
+  - testing→shipping: 必须有 product_photo + inspection_report
+  - shipping→archived: 必须有 as_built_drawing
+  - 不满足时 `approve-advance` 返回 409
+- **新端点**:
+  - `POST /api/projects/{pid}/customer-account` — 自动开通客户账号 + 生成随机密码 + 发送欢迎邮件;无 Resend Key 时降级返回明文密码
+  - `POST/PATCH/DELETE /api/projects/{pid}/materials/{mat_id}` — 甲供料 CRUD
+  - `GET /api/notifications` + `POST /api/notifications/{id}/read` + `POST /api/notifications/read-all` — 站内通知
+- **审计追踪**: `status_history` + `notifications` collection 自动记录所有阶段流转的操作人 + 时间 + 备注
+- **邮件模板** (`notifications.py`):
+  - `send_customer_welcome_email`(双语 HTML,含登录凭据)
+  - `send_stage_complete_email`(双语 HTML,标明阶段 + 项目 + 工令号 + 操作员备注)
+  - 缺 RESEND_API_KEY 时静默 skip,不影响应用稳定性
+### 前端
+- **`/portal` 客户门户** (`CustomerPortal.jsx`): 项目列表 + 7 阶段 stepper + 甲供料卡 + 文件按类分组下载 + 通知列表(可标记已读) + 双语切换 + 登出
+- **ProtectedRoute**: 客户角色锁定在 `/portal` 和 `/admin/profile`,试图访问 `/admin/*` 自动跳回
+- **AdminLogin**: 按角色路由(customer → /portal; 其他 → /admin)
+- **AdminLayout**: 顶部右上角 `NotificationBell`(30s 轮询 + 未读红点 + 下拉列表 + 全部已读)
+- **ProjectDetail.jsx**:
+  - 新 `CustomerAccessCard`:显示客户邮箱 + 一键"开通客户账号"按钮(返回 toast 显示凭据)
+  - 新 `CustomerMaterialsCard`:甲供料增删 + 勾选到货
+  - 新 `PhaseFileSection` × 6:每个新文件类别独立卡,带上传按钮 + 当前阶段提示 + 上传人信息
+  - 保留旧的 photo/drawing/code 区域(向后兼容)
+  - 新 `STATUS_FLOW` 7 阶段 stepper(LEGACY_TO_NEW 映射防御性兼容)
+- **ProjectForm.jsx**: 新增 `work_order_no` + `customer_email` 字段 + 7 阶段状态下拉
+- **i18n/admin.js**: status 字典扩展支持新旧 11 个值
+### 测试 (2026-02)
+- **iteration_8**: 4/7 通过 → 发现 2 个阻塞 bug
+  - Bug #1: `POST /files` 把所有非 legacy category 静默改为 "drawing"
+  - Bug #2: `POST /materials` 在 `customer_materials: null` 时 500
+- **修复**:
+  - 扩展 `ALLOWED_FILE_CATEGORIES` 元组至 9 种 + 文件扩展名白名单加 `.docx/.xlsx/.zip`
+  - `create_project` 默认 `customer_materials=[]` + on_startup 回填旧记录
+- **iteration_9 重测**: 10/10 通过(7 case + 3 case 全 7 阶段 round-trip + 全部 5 个 gate)。前端客户门户端到端验证(provision → login redirect → stepper → notifications → files → logout)。
+- **新增文件**:
+  - `/app/backend/tests/test_iteration8.py` (7 cases)
+  - `/app/backend/tests/test_iteration9_roundtrip.py` (3 cases)
+  - `/app/frontend/src/admin/pages/CustomerPortal.jsx`
+
 - **新增后端**:`/app/backend/cms.py` 完整 CMS 路由,集成到 `register_cms_routes()`
 - **公开只读端点**(任何人访问公开页面时调用):
   - `GET /api/site/certifications` · `GET /api/site/case-studies` · `GET /api/site/client-groups` · `GET /api/site/partners` · `GET /api/site/contact-info`
