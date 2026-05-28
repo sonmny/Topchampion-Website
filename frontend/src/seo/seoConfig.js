@@ -1,8 +1,12 @@
 // Per-route SEO copy (EN + CN).
-// Update SITE.url to match the production domain when deploying.
+// SITE.url uses REACT_APP_SITE_URL at build time when set, otherwise falls back to
+// the current preview domain. To switch to production, set REACT_APP_SITE_URL in
+// frontend/.env to your real domain (e.g. https://www.topchampion.cn) and rebuild.
+
+const PROD_URL = process.env.REACT_APP_SITE_URL || "https://green-automation-pro.preview.emergentagent.com";
 
 export const SITE = {
-  url: "https://green-automation-pro.preview.emergentagent.com",
+  url: PROD_URL,
   ogImage: "/logo.png",
   name: {
     en: "Topchampion Electric & Automation",

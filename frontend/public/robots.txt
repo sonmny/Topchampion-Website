@@ -1,6 +1,12 @@
 User-agent: *
 Allow: /
+
+# Admin & customer portal — not for indexing
 Disallow: /admin
 Disallow: /admin/
+Disallow: /portal
+
+# Asset routes that aren't user-facing
+Disallow: /api/
 
 Sitemap: https://green-automation-pro.preview.emergentagent.com/sitemap.xml

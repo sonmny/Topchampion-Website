@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useLang } from "../i18n/LangContext";
 import { useSiteContent } from "../hooks/useSiteContent";
-import { Linkedin, Twitter, Youtube, Github, MapPin, Mail, Phone } from "lucide-react";
+import { MapPin, Mail, Phone, QrCode } from "lucide-react";
 
 export const Footer = () => {
   const { t, lang } = useLang();
@@ -103,24 +103,28 @@ export const Footer = () => {
             </div>
           ))}
 
-          {/* Social */}
+          {/* Connect — official WeChat QR */}
           <div className="lg:col-span-2">
-            <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-5">
-              Connect
+            <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#C9A063] mb-5 flex items-center gap-2">
+              <QrCode size={12} /> {lang === "cn" ? "扫码联系" : "Scan to Connect"}
             </div>
-            <div className="flex gap-2 flex-wrap">
-              {[Linkedin, Twitter, Youtube, Github].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  data-testid={`social-${i}`}
-                  onClick={(e) => e.preventDefault()}
-                  className="w-10 h-10 flex items-center justify-center border border-white/10 text-zinc-400 hover:text-[#C9A063] hover:border-[#C9A063] transition-colors"
-                  aria-label={Icon.displayName || "social"}
-                >
-                  <Icon size={16} />
-                </a>
-              ))}
+            <div
+              data-testid="wechat-qr"
+              className="group relative inline-flex flex-col items-center gap-3 p-3 bg-white/[0.03] border border-[#C9A063]/30 hover:border-[#C9A063] hover:bg-[#C9A063]/[0.04] transition-all duration-300"
+            >
+              {/* Decorative inner gold accent */}
+              <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                   style={{ boxShadow: "inset 0 0 0 1px rgba(201,160,99,0.5), 0 0 24px rgba(201,160,99,0.18)" }} />
+              <img
+                src="/wechat-qr.jpg"
+                alt={lang === "cn" ? "苏州赛冠官方微信二维码" : "Suzhou Topchampion official WeChat QR"}
+                loading="lazy"
+                className="relative w-32 h-32 lg:w-36 lg:h-36 object-cover bg-white p-1 transition-all duration-300 group-hover:scale-[1.02]"
+                style={{ filter: "contrast(1.05) saturate(1.05)" }}
+              />
+              <div className="relative font-mono text-[9px] tracking-[0.25em] uppercase text-zinc-400 group-hover:text-[#C9A063] transition-colors text-center leading-relaxed">
+                {lang === "cn" ? "扫码添加 · 商务咨询" : "Scan · Business Enquiry"}
+              </div>
             </div>
           </div>
         </div>
