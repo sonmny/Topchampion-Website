@@ -6,7 +6,7 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /portal
 
-# Asset routes that aren't user-facing
+# Backend API routes
 Disallow: /api/
 
-Sitemap: https://green-automation-pro.preview.emergentagent.com/sitemap.xml
+Sitemap: https://www.topchampion.net/sitemap.xml

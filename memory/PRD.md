@@ -154,6 +154,28 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
   - `/app/backend/tests/test_iteration9_roundtrip.py` (3 cases)
   - `/app/frontend/src/admin/pages/CustomerPortal.jsx`
 
+## Phase 12 (2026-02) — SEO 完善 + Footer 二维码 + 部署清单
+用户请求:部署前最后审查 + 把 Footer 4 个社交媒体链接换成公司微信二维码 + 出部署文档。
+- **目标生产域名**: `https://www.topchampion.net` (用户提供,强制 HTTPS)
+- **SEO 修复**:
+  - `public/index.html` 删除重复的 `<title>Emergent | Fullstack App</title>` (覆盖了真正的 SEO 标题)
+  - `seoConfig.SITE.url` 改为读取 `REACT_APP_SITE_URL`(部署时只改 .env 一处)
+  - `sitemap.xml` 13 个 URL 全部更新为 `https://www.topchampion.net`
+  - `robots.txt` 增加 Disallow `/portal` + `/api/`,sitemap 指向 prod 域名
+- **Footer Connect 区**:
+  - 移除 Linkedin / Twitter / Youtube / Github 4 个空链接图标
+  - 新增 `data-testid="wechat-qr"` 二维码卡:`/wechat-qr.jpg` + 金色描边 + hover 内发光(`box-shadow: inset 0 0 0 1px rgba(201,160,99,0.5), 0 0 24px rgba(201,160,99,0.18)`) + `contrast(1.05) saturate(1.05)` 调色
+  - 双语标签: "扫码联系" / "Scan to Connect" + 副标 "扫码添加 · 商务咨询" / "Scan · Business Enquiry"
+- **新文档**: `/app/DEPLOY.md` — 阿里云/腾讯云完整部署清单:
+  - 服务器配置 + 软件依赖 (Ubuntu 22.04 + Python 3.11 + Node 20 + MongoDB 7 + Nginx + Supervisor + Certbot)
+  - 后端/前端 .env 模板(含 JWT_SECRET 生成命令)
+  - Nginx 反代配置(HSTS + 静态缓存 + /api 流式上传 + SPA fallback)
+  - SSL 申请 (Let's Encrypt)
+  - 部署后 SEO 收录步骤 (Google Search Console + 百度站长 + 必应)
+  - 后续启用 Resend Key 的零代码改动流程
+  - 日常运维 (日志/备份/更新流程)
+  - 自检清单 + 常见问题排查表
+
 - **新增后端**:`/app/backend/cms.py` 完整 CMS 路由,集成到 `register_cms_routes()`
 - **公开只读端点**(任何人访问公开页面时调用):
   - `GET /api/site/certifications` · `GET /api/site/case-studies` · `GET /api/site/client-groups` · `GET /api/site/partners` · `GET /api/site/contact-info`
