@@ -154,6 +154,23 @@ Premium, conversion-oriented B2B industrial landing page for **Suzhou Topchampio
   - `/app/backend/tests/test_iteration9_roundtrip.py` (3 cases)
   - `/app/frontend/src/admin/pages/CustomerPortal.jsx`
 
+## Phase 13 (2026-02) — IT 极简部署包(方案 B 实施)
+用户 IT 担心 React 编译 + MongoDB 建库复杂。回应:
+- **澄清**:MongoDB 不需要建库(NoSQL,首次写入自动创建);React 编译在 Emergent 这边完成即可
+- **新交付物**:`/app/topchampion-deploy.tar.gz` (3.0 MB) 完整部署包,IT **零编译**部署
+  - `frontend/` — yarn build 产物(258KB gzip JS + 14KB CSS),IT 直接上传给 Nginx 托管
+  - `backend/` — FastAPI 后端 + requirements.txt + .env.example
+  - `deploy/install.sh` — 一键安装脚本(自动装 Python 3.11 + MongoDB + 设置 supervisor + 自动生成 JWT_SECRET + 自动生成强密码)
+  - `deploy/nginx.conf` — Nginx vhost 模板(HSTS + SSL + API 反代 + SPA fallback)
+  - `deploy/supervisor.conf` — uvicorn 进程守护配置
+  - `README.md` — 极简 3 步 IT 操作清单(传文件 → 装环境 → 配 Nginx)
+- **副本**: `/app/DEPLOY_IT_GUIDE.md`、`/app/install.sh`、`/app/nginx.conf`、`/app/supervisor.conf`(方便单独下载)
+- **关键设计**:
+  - install.sh **自动生成 ADMIN_PASSWORD** 并保存到 `/root/topchampion-admin-password.txt`(避免 IT 用默认密码)
+  - install.sh 完成后明确告诉 IT 还需手动做的 2 步(Nginx + SSL)
+  - Nginx vhost 用 `127.0.0.1:8001` 反代,uvicorn 不对外暴露
+  - MongoDB 只监听 localhost,与现有 MySQL/PHP 完全隔离
+
 ## Phase 12 (2026-02) — SEO 完善 + Footer 二维码 + 部署清单
 用户请求:部署前最后审查 + 把 Footer 4 个社交媒体链接换成公司微信二维码 + 出部署文档。
 - **目标生产域名**: `https://www.topchampion.net` (用户提供,强制 HTTPS)
